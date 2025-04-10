@@ -16,7 +16,7 @@ use_cuda = torch.cuda.is_available()
 device = "cuda" if use_cuda else "cpu"
 print(f"Utilisation de {device} pour la diarisation.")
 
-model = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", 
+pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", 
     use_auth_token=hf_token)
 
 def parse_args():
@@ -30,8 +30,8 @@ args = parse_args()
 audio_file = args.audio_file
 
 # Get a progress bar
-with ProgressHook as hook:
-    diarization = model(audio_file, hook=hook)
+with ProgressHook() as hook:
+    diarization = pipeline(audio_file, hook=hook)
 
 output_text_file = "diarization_results.txt"
 
