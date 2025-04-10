@@ -2,7 +2,7 @@ import os
 import argparse
 from dotenv import load_dotenv
 import torch
-from pyannote.audio import Inference
+from pyannote.audio import Pipeline
 import matplotlib.pyplot as plt
 from pyannote.core import Segment
 
@@ -15,7 +15,8 @@ use_cuda = torch.cuda.is_available()
 device = "cuda" if use_cuda else "cpu"
 print(f"Utilisation de {device} pour la diarisation.")
 
-model = Inference("pyannote/speaker-diarization", use_auth_token=hf_token)
+model = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", 
+    use_auth_token=hf_token)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Diarisation de locuteurs dans un fichier audio.")
@@ -27,7 +28,7 @@ args = parse_args()
 
 audio_file = args.audio_file
 
-diarization = model({'uri': 'audio', 'audio': audio_file})
+diarization = model(audio_file)
 
 output_text_file = "diarization_results.txt"
 
