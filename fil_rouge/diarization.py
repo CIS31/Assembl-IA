@@ -5,6 +5,7 @@ import torch
 from pyannote.audio import Pipeline
 import matplotlib.pyplot as plt
 from pyannote.core import Segment
+from pyannote.audio.pipelines import ProgressHook
 
 load_dotenv()
 
@@ -28,7 +29,9 @@ args = parse_args()
 
 audio_file = args.audio_file
 
-diarization = model(audio_file)
+# Get a progress bar
+with ProgressHook as hook:
+    diarization = model(audio_file, hook=hook)
 
 output_text_file = "diarization_results.txt"
 
