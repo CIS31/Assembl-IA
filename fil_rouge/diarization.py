@@ -5,7 +5,7 @@ import torch
 from pyannote.audio import Pipeline
 import matplotlib.pyplot as plt
 from pyannote.core import Segment
-from pyannote.audio.pipelines import ProgressHook
+from pyannote.audio.pipelines.utils.hook import ProgressHook
 
 load_dotenv()
 
