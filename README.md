@@ -1,4 +1,4 @@
-# Assembl-IA-streamlit
+# Assembl-IA
 
 ## Analyse textuelle
 
