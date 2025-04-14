@@ -30,7 +30,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - facial_emotions_image_detection : 
 🔗 https://huggingface.co/dima806/facial_emotions_image_detection
 
-## 📈 Evaluation des modèles 
+##  Evaluation des modèles 
 
 - utilisation du dataset de test suivant :
 🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
