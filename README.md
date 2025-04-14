@@ -6,14 +6,14 @@
 
 ## Analyse vidéo
 
-## Présentation
+#### Présentation
 
 Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
 
 ![Demo](./video/output/video_vitrine.gif)
 
 
-## 🚀 Fonctionnalités
+##  Fonctionnalités
 
 - ✅ Lecture vidéo frame par frame
 - ✅ Détection des visages
@@ -22,7 +22,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - ❌Création d'un timeline (fichier JSON/CSV avec timestamps et émotions)
 - ❌Graphique émotionnel temporel
 
-## 🤖 Modèles utilisés
+##  Modèles utilisés
 
 - YOLO v8 : 
 🔗 https://yolov8.com/
