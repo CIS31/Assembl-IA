@@ -3,6 +3,7 @@ import cv2
 from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
 from PIL import Image
+import csv  # Import CSV module for saving timeline data
 
 class HumanEmotionAnalyzer:
     def __init__(self, input_folder_images, input_folder_video, output_folder, yolo_model_path, emotion_model_dir):
@@ -89,78 +90,93 @@ class HumanEmotionAnalyzer:
         duration = total_frames / fps
         print(f"Movie duration: {duration:.1f}s @ {fps}FPS")
 
-        frame_count = 0  # Initialize frame counter
+        # Open a CSV file to save the timeline
+        timeline_file = f"{self.output_folder}/timeline_{output_name.split('.')[0]}.csv"
+        with open(timeline_file, mode='w', newline='', encoding='utf-8') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            # Write header
+            csvwriter.writerow(["Second", "Number of Detections", "Emotions"])
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break  # End of video
+            frame_count = 0  # Initialize frame counter
 
-            # Process every XXth frame
-            if frame_count % analyse_each_x_frame == 0:
-                # Initial low resolution detection
-                results = self.silent_inference(self.detection_model, frame,
-                                                conf=0.3,
-                                                imgsz=self.IMG_SIZE_LOW,
-                                                iou=0.1,
-                                                max_det=self.DETECTION_THRESHOLD)
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break  # End of video
 
-                nb_detections_low = sum(len(r.boxes) for r in results)
+                # Process every XXth frame
+                if frame_count % analyse_each_x_frame == 0:
+                    second = frame_count // fps  # Calculate the current second
 
-                # High resolution detection if needed
-                if nb_detections_low >= self.DETECTION_THRESHOLD:
+                    # Initial low resolution detection
                     results = self.silent_inference(self.detection_model, frame,
-                                                    conf=0.05,
-                                                    imgsz=self.IMG_SIZE_HIGH,
+                                                    conf=0.3,
+                                                    imgsz=self.IMG_SIZE_LOW,
                                                     iou=0.1,
-                                                    max_det=600)
+                                                    max_det=self.DETECTION_THRESHOLD)
 
-                    # Plot bounding boxes without emotion prediction
-                    for r in results:
-                        boxes = r.boxes
-                        for box in boxes:
-                            x1, y1, x2, y2 = map(int, box.xyxy[0])
-                            # Draw bounding box
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box for face detection only
+                    nb_detections_low = sum(len(r.boxes) for r in results)
+                    emotions_summary = []  # Store emotions for this second
 
-                # Perform emotion prediction only if nb_detections_low < DETECTION_THRESHOLD
-                else:
-                    for r in results:
-                        boxes = r.boxes
-                        for box in boxes:
-                            x1, y1, x2, y2 = map(int, box.xyxy[0])
-                            face = frame[y1:y2, x1:x2]
+                    # High resolution detection if needed
+                    if nb_detections_low >= self.DETECTION_THRESHOLD:
+                        results = self.silent_inference(self.detection_model, frame,
+                                                        conf=0.05,
+                                                        imgsz=self.IMG_SIZE_HIGH,
+                                                        iou=0.1,
+                                                        max_det=600)
 
-                            # Convert face (NumPy array) to PIL image
-                            face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
+                        # Plot bounding boxes without emotion prediction
+                        for r in results:
+                            boxes = r.boxes
+                            for box in boxes:
+                                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                                # Draw bounding box
+                                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box for face detection only
 
-                            # Predict emotion using the pipeline
-                            emotion_prediction = self.pipe(face_pil)
+                    # Perform emotion prediction only if nb_detections_low < DETECTION_THRESHOLD
+                    else:
+                        for r in results:
+                            boxes = r.boxes
+                            for box in boxes:
+                                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                                face = frame[y1:y2, x1:x2]
 
-                            # Extract top two emotions
-                            emotion1 = emotion_prediction[0]['label']
-                            emotion2 = emotion_prediction[1]['label']
-                            score1 = emotion_prediction[0]['score']
-                            score2 = emotion_prediction[1]['score']
+                                # Convert face (NumPy array) to PIL image
+                                face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
 
-                            # Create label
-                            label = f"{emotion1}({score1:.2f}) {emotion2}({score2:.2f})"
-                            print(label)
+                                # Predict emotion using the pipeline
+                                emotion_prediction = self.pipe(face_pil)
 
-                            # Draw bounding box and label
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                                # Extract top two emotions
+                                emotion1 = emotion_prediction[0]['label']
+                                emotion2 = emotion_prediction[1]['label']
+                                score1 = emotion_prediction[0]['score']
+                                score2 = emotion_prediction[1]['score']
 
-            # Write the annotated frame to the output video
-            out.write(frame)
+                                # Create label
+                                label = f"{emotion1}({score1:.2f}) {emotion2}({score2:.2f})"
+                                print(label)
+                                emotions_summary.append(label)
 
-            # Increment frame count
-            frame_count += 1
+                                # Draw bounding box and label
+                                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+                    # Write the timeline data for this second
+                    csvwriter.writerow([second, nb_detections_low, "; ".join(emotions_summary)])
+
+                # Write the annotated frame to the output video
+                out.write(frame)
+
+                # Increment frame count
+                frame_count += 1
 
         # Release resources
         cap.release()
         out.release()
         print(f"Emotion analysis video saved to {self.output_folder}/{output_name}")
+        print(f"Timeline saved to {timeline_file}")
 
 
 # Example usage
@@ -174,10 +190,10 @@ if __name__ == "__main__":
     )
 
     # # Example for images
-    for image in os.listdir(analyzer.input_folder_images):
-        if image.endswith('.jpeg') or image.endswith('.png'):
-            analyzer.analyze_emotions_img(f'{analyzer.input_folder_images}/{image}', f'output_{image}')
+    # for image in os.listdir(analyzer.input_folder_images):
+    #     if image.endswith('.jpeg') or image.endswith('.png'):
+    #         analyzer.analyze_emotions_img(f'{analyzer.input_folder_images}/{image}', f'output_{image}')
 
     # Example for video
-    # video_path = f'{analyzer.input_folder_video}/FinSéanceMotionCensure04decembre2024_1080p.mp4'
-    # analyzer.analyze_emotions_vid(video_path, 'output_video_test.mp4', analyse_each_x_frame=10)
+    video_path = f'{analyzer.input_folder_video}/video_short.mp4'
+    analyzer.analyze_emotions_vid(video_path, 'output_video_test.mp4', analyse_each_x_frame=10) # example : 1 to process every frame, 10 to process every 10th frame
