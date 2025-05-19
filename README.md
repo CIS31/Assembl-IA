@@ -19,7 +19,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - ✅ Détection des visages
 - ✅ Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
 - ✅ Annotation des résultats sur la vidéo en output
-- ❌Création d'un timeline (fichier JSON/CSV avec timestamps et émotions)
+- ✅ Création d'un timeline (fichier CSV)
 - ❌Graphique émotionnel temporel
 
 ## 🤖 Modèles utilisés
