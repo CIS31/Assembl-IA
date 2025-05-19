@@ -1,4 +1,4 @@
-# Assembl-IA-streamlit
+# Assembl-IA
 
 ## Analyse textuelle
 
@@ -6,14 +6,14 @@
 
 ## Analyse vidéo
 
-## Présentation
+#### Présentation
 
 Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
 
 ![Demo](./video/output/video_vitrine.gif)
 
 
-## 🚀 Fonctionnalités
+##  Fonctionnalités
 
 - ✅ Lecture vidéo frame par frame
 - ✅ Détection des visages
@@ -22,7 +22,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - ✅ Création d'un timeline (fichier CSV)
 - ❌Graphique émotionnel temporel
 
-## 🤖 Modèles utilisés
+##  Modèles utilisés
 
 - YOLO v8 : 
 🔗 https://yolov8.com/
@@ -30,7 +30,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - facial_emotions_image_detection : 
 🔗 https://huggingface.co/dima806/facial_emotions_image_detection
 
-## 📈 Evaluation des modèles 
+##  Evaluation des modèles 
 
 - utilisation du dataset de test suivant :
 🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
