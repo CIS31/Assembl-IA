@@ -179,6 +179,20 @@ class HumanEmotionAnalyzer:
         print(f"Timeline saved to {timeline_file}")
 
 
+
+def detect_azure_run():
+    """
+    Function to detect if the code is running in an Azure environment.
+    This function checks for the presence of a specific widget or environment variable.
+    """
+    try:
+        dbutils.widgets.text("AZURE_RUN", "false")  # valeur par défaut
+        return dbutils.widgets.get("AZURE_RUN").lower() == "true"
+    except Exception:
+        # Si les widgets ne sont pas disponibles (en local ou en script), fallback
+        return os.environ.get("AZURE_RUN", "false").lower() == "true"
+
+
 def mount_dir_Azure(MOUNT_DIR):
     """
     Function to mount the directory in Azure environment.
@@ -207,7 +221,7 @@ def mount_dir_Azure(MOUNT_DIR):
 # Example usage
 if __name__ == "__main__":
     # Check if running in Azure environment
-    AZURE_RUN = os.environ.get("AZURE_RUN", "False").lower() == "true"
+    AZURE_RUN = detect_azure_run()
 
     if AZURE_RUN:
         print("Running in Azure environment")
