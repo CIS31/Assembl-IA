@@ -224,32 +224,33 @@ if __name__ == "__main__":
 
     if AZURE_RUN:
         print("Running in Azure environment")
-        # Mount the directory in Azure environment
         MOUNT_DIR = "/mnt/data"
         mount_dir_Azure(MOUNT_DIR)
-        # DBFS paths
-        dbfs_base = f"/dbfs{MOUNT_DIR}/video"
 
-        # Set paths for Azure environment
-        input_folder_images = f"{dbfs_base}/input/images"
-        input_folder_video = f"{dbfs_base}/input/videos"
-        output_folder = f"{dbfs_base}/output"
+        # Base path
+        base_path = f"{MOUNT_DIR}/video"
 
-        # Set paths for YOLO model
-        yolo_model_path_dbfs = f"{dbfs_base}/models/yolov8/yolov8n-face-lindevs.pt"
+        # Chemins d’entrée et sortie
+        input_folder_images = f"{base_path}/input/images"
+        input_folder_video = f"{base_path}/input/videos"
+        output_folder = f"{base_path}/output"
+
+        # --- YOLO model
+        yolo_model_path_mnt = f"{base_path}/models/yolov8/yolov8n-face-lindevs.pt"
         yolo_model_path_local = "/tmp/yolov8n-face-lindevs.pt"
         if not os.path.exists(yolo_model_path_local):
-            print(f"Copying YOLO model from DBFS to local: {yolo_model_path_dbfs} → {yolo_model_path_local}")
-            shutil.copyfile(yolo_model_path_dbfs, yolo_model_path_local)
+            print(f"Copying YOLO model from {yolo_model_path_mnt} → {yolo_model_path_local}")
+            dbutils.fs.cp(yolo_model_path_mnt, f"file:{yolo_model_path_local}")
         yolo_model_path = yolo_model_path_local
 
-        # Set paths for emotion model
-        emotion_model_dir_dbfs = f"{dbfs_base}/models/5-HuggingFace"
+        # --- HuggingFace model
+        emotion_model_dir_mnt = f"{base_path}/models/5-HuggingFace"
         emotion_model_dir_local = "/tmp/emotion_model"
         if not os.path.exists(emotion_model_dir_local):
-            print(f"Copying emotion model directory from DBFS to local: {emotion_model_dir_dbfs} → {emotion_model_dir_local}")
-            shutil.copytree(emotion_model_dir_dbfs, emotion_model_dir_local)
+            print(f"Copying emotion model from {emotion_model_dir_mnt} → {emotion_model_dir_local}")
+            dbutils.fs.cp(emotion_model_dir_mnt, f"file:{emotion_model_dir_local}", recurse=True)
         emotion_model_dir = emotion_model_dir_local
+
 
 
     else:
