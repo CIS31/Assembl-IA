@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2
 from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
@@ -185,12 +186,9 @@ def detect_azure_run():
     Function to detect if the code is running in an Azure environment.
     This function checks for the presence of a specific widget or environment variable.
     """
-    try:
-        dbutils.widgets.text("AZURE_RUN", "false")  # valeur par défaut
-        return dbutils.widgets.get("AZURE_RUN").lower() == "true"
-    except Exception:
-        # Si les widgets ne sont pas disponibles (en local ou en script), fallback
-        return os.environ.get("AZURE_RUN", "false").lower() == "true"
+    # Analyse les arguments passés au script sous forme "AZURE_RUN=true"
+    args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
+    return args.get("AZURE_RUN", "false").lower() == "true"
 
 
 def mount_dir_Azure(MOUNT_DIR):
