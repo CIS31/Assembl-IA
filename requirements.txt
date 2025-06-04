@@ -1,0 +1,12 @@
+numpy==1.26.4
+opencv-python==4.10.0.84
+opencv-python-headless==4.10.0.84
+scipy==1.13.1
+torch==2.5.1
+torch-model-archiver==0.12.0
+torch-workflow-archiver==0.2.15
+torchserve==0.12.0
+torchvision==0.20.1
+transformers==4.49.0
+ultralytics==8.3.50
+ultralytics-thop==2.0.13

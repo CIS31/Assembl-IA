@@ -179,14 +179,64 @@ class HumanEmotionAnalyzer:
         print(f"Timeline saved to {timeline_file}")
 
 
+def mount_dir_Azure(MOUNT_DIR):
+    """
+    Function to mount the directory in Azure environment.
+    This is a placeholder function and should be implemented based on the specific Azure environment setup.
+    """
+    def is_mounted(mount_point):
+        mounts = [mount.mountPoint for mount in dbutils.fs.mounts()]
+        return mount_point in mounts
+
+    configs = {"fs.azure.account.auth.type": "OAuth",
+            "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+            "fs.azure.account.oauth2.client.id": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-application-id"),
+            "fs.azure.account.oauth2.client.secret": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-secret-value"),
+            "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{dbutils.secrets.get(scope='az-kv-assemblia-scope', key='sp-tenant-id')}/oauth2/token"}
+
+    if not is_mounted(MOUNT_DIR):
+        dbutils.fs.mount(
+        source = "abfss://data@azbstelecomparis.dfs.core.windows.net/",
+        mount_point = MOUNT_DIR,
+        extra_configs = configs)
+        print(f"Successfully mounted {MOUNT_DIR}")
+    else:
+        print(f"{MOUNT_DIR} is already mounted")
+
+
 # Example usage
 if __name__ == "__main__":
-    analyzer = HumanEmotionAnalyzer(
-        input_folder_images='input/images',
-        input_folder_video='input/videos',
-        output_folder='output',
-        yolo_model_path='models/yolov8/yolov8n-face-lindevs.pt',
+    # Check if running in Azure environment
+    AZURE_RUN = os.environ.get("AZURE_RUN", "False").lower() == "true"
+
+    if AZURE_RUN:
+        print("Running in Azure environment")
+        # Mount the directory in Azure environment
+        MOUNT_DIR = "/mnt/data"
+        mount_dir_Azure(MOUNT_DIR)
+        # Set paths for Azure environment
+        input_folder_images = f"{MOUNT_DIR}/input/images"
+        input_folder_video = f"{MOUNT_DIR}/input/videos"
+        output_folder = f"{MOUNT_DIR}/output"
+        yolo_model_path = f"{MOUNT_DIR}/models/yolov8/yolov8n-face-lindevs.pt"
+        emotion_model_dir = f"{MOUNT_DIR}/models/5-HuggingFace/"
+
+    else:
+        print("Running in local environment")
+        # Set paths for local environment
+        input_folder_images='input/images'
+        input_folder_video='input/videos'
+        output_folder='output'
+        yolo_model_path='models/yolov8/yolov8n-face-lindevs.pt'
         emotion_model_dir='models/5-HuggingFace/'
+    
+    # Initialize the HumanEmotionAnalyzer with correct paths
+    analyzer = HumanEmotionAnalyzer(
+        input_folder_images=input_folder_images,
+        input_folder_video=input_folder_video,
+        output_folder=output_folder,
+        yolo_model_path=yolo_model_path,
+        emotion_model_dir=emotion_model_dir
     )
 
     # # Example for images
