@@ -5,6 +5,7 @@ from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
 from PIL import Image
 import csv  # Import CSV module for saving timeline data
+import shutil  # Import shutil for file operations
 
 class HumanEmotionAnalyzer:
     def __init__(self, input_folder_images, input_folder_video, output_folder, yolo_model_path, emotion_model_dir):
@@ -226,12 +227,30 @@ if __name__ == "__main__":
         # Mount the directory in Azure environment
         MOUNT_DIR = "/mnt/data"
         mount_dir_Azure(MOUNT_DIR)
+        # DBFS paths
+        dbfs_base = f"/dbfs{MOUNT_DIR}/video"
+
         # Set paths for Azure environment
-        input_folder_images = f"/dbfs/{MOUNT_DIR}/video/input/images"
-        input_folder_video = f"/dbfs/{MOUNT_DIR}/video/input/videos"
-        output_folder = f"/dbfs/{MOUNT_DIR}/video/output"
-        yolo_model_path = f"/dbfs/{MOUNT_DIR}/video/models/yolov8/yolov8n-face-lindevs.pt"
-        emotion_model_dir = f"/dbfs/{MOUNT_DIR}/video/models/5-HuggingFace/"
+        input_folder_images = f"{dbfs_base}/input/images"
+        input_folder_video = f"{dbfs_base}/input/videos"
+        output_folder = f"{dbfs_base}/output"
+
+        # Set paths for YOLO model
+        yolo_model_path_dbfs = f"{dbfs_base}/models/yolov8/yolov8n-face-lindevs.pt"
+        yolo_model_path_local = "/tmp/yolov8n-face-lindevs.pt"
+        if not os.path.exists(yolo_model_path_local):
+            print(f"Copying YOLO model from DBFS to local: {yolo_model_path_dbfs} → {yolo_model_path_local}")
+            shutil.copyfile(yolo_model_path_dbfs, yolo_model_path_local)
+        yolo_model_path = yolo_model_path_local
+
+        # Set paths for emotion model
+        emotion_model_dir_dbfs = f"{dbfs_base}/models/5-HuggingFace"
+        emotion_model_dir_local = "/tmp/emotion_model"
+        if not os.path.exists(emotion_model_dir_local):
+            print(f"Copying emotion model directory from DBFS to local: {emotion_model_dir_dbfs} → {emotion_model_dir_local}")
+            shutil.copytree(emotion_model_dir_dbfs, emotion_model_dir_local)
+        emotion_model_dir = emotion_model_dir_local
+
 
     else:
         print("Running in local environment")
