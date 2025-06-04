@@ -227,11 +227,11 @@ if __name__ == "__main__":
         MOUNT_DIR = "/mnt/data"
         mount_dir_Azure(MOUNT_DIR)
         # Set paths for Azure environment
-        input_folder_images = f"{MOUNT_DIR}/input/images"
-        input_folder_video = f"{MOUNT_DIR}/input/videos"
-        output_folder = f"{MOUNT_DIR}/output"
-        yolo_model_path = f"{MOUNT_DIR}/models/yolov8/yolov8n-face-lindevs.pt"
-        emotion_model_dir = f"{MOUNT_DIR}/models/5-HuggingFace/"
+        input_folder_images = f"/dbfs/{MOUNT_DIR}/input/images"
+        input_folder_video = f"/dbfs/{MOUNT_DIR}/input/videos"
+        output_folder = f"/dbfs/{MOUNT_DIR}/output"
+        yolo_model_path = f"/dbfs/{MOUNT_DIR}/models/yolov8/yolov8n-face-lindevs.pt"
+        emotion_model_dir = f"/dbfs/{MOUNT_DIR}/models/5-HuggingFace/"
 
     else:
         print("Running in local environment")
