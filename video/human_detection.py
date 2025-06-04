@@ -224,33 +224,45 @@ if __name__ == "__main__":
 
     if AZURE_RUN:
         print("Running in Azure environment")
+        
+        # Mount Azure storage if needed
         MOUNT_DIR = "/mnt/data"
         mount_dir_Azure(MOUNT_DIR)
 
-        # Base path
-        base_path = f"{MOUNT_DIR}/video"
+        # DBFS paths
+        input_folder_images_dbfs = f"{MOUNT_DIR}/video/input/images"
+        input_folder_video_dbfs = f"{MOUNT_DIR}/video/input/videos"
+        output_folder_dbfs = f"{MOUNT_DIR}/video/output"
+        yolo_model_path_dbfs = f"{MOUNT_DIR}/video/models/yolov8/yolov8n-face-lindevs.pt"
+        emotion_model_dir_dbfs = f"{MOUNT_DIR}/video/models/5-HuggingFace/"
+        video_file_dbfs = f"{input_folder_video_dbfs}/video_short.mp4"
 
-        # Chemins d’entrée et sortie
-        input_folder_images = f"{base_path}/input/images"
-        input_folder_video = f"{base_path}/input/videos"
-        output_folder = f"{base_path}/output"
-
-        # --- YOLO model
-        yolo_model_path_mnt = f"{base_path}/models/yolov8/yolov8n-face-lindevs.pt"
+        # Local temp paths
         yolo_model_path_local = "/tmp/yolov8n-face-lindevs.pt"
+        emotion_model_dir_local = "/tmp/emotion_model"
+        video_path_local = "/tmp/video_short.mp4"
+
+        # Copy YOLO model locally
         if not os.path.exists(yolo_model_path_local):
-            print(f"Copying YOLO model from {yolo_model_path_mnt} → {yolo_model_path_local}")
-            dbutils.fs.cp(yolo_model_path_mnt, f"file:{yolo_model_path_local}")
+            print(f"Copying YOLO model from {yolo_model_path_dbfs} → {yolo_model_path_local}")
+            dbutils.fs.cp(yolo_model_path_dbfs, f"file:{yolo_model_path_local}")
         yolo_model_path = yolo_model_path_local
 
-        # --- HuggingFace model
-        emotion_model_dir_mnt = f"{base_path}/models/5-HuggingFace"
-        emotion_model_dir_local = "/tmp/emotion_model"
+        # Copy emotion model locally
         if not os.path.exists(emotion_model_dir_local):
-            print(f"Copying emotion model from {emotion_model_dir_mnt} → {emotion_model_dir_local}")
-            dbutils.fs.cp(emotion_model_dir_mnt, f"file:{emotion_model_dir_local}", recurse=True)
+            print(f"Copying emotion model from {emotion_model_dir_dbfs} → {emotion_model_dir_local}")
+            dbutils.fs.cp(emotion_model_dir_dbfs, f"file:{emotion_model_dir_local}", recurse=True)
         emotion_model_dir = emotion_model_dir_local
 
+        # Copy video file locally
+        if not os.path.exists(video_path_local):
+            print(f"Copying video from {video_file_dbfs} → {video_path_local}")
+            dbutils.fs.cp(video_file_dbfs, f"file:{video_path_local}")
+        video_path = video_path_local
+
+        # Local output folder (create if doesn't exist)
+        output_folder = "/tmp/output"
+        os.makedirs(output_folder, exist_ok=True)
 
 
     else:
@@ -264,8 +276,8 @@ if __name__ == "__main__":
     
     # Initialize the HumanEmotionAnalyzer with correct paths
     analyzer = HumanEmotionAnalyzer(
-        input_folder_images=input_folder_images,
-        input_folder_video=input_folder_video,
+        input_folder_images=input_folder_images if not AZURE_RUN else input_folder_images_dbfs,
+        input_folder_video=input_folder_video if not AZURE_RUN else input_folder_video_dbfs,
         output_folder=output_folder,
         yolo_model_path=yolo_model_path,
         emotion_model_dir=emotion_model_dir
@@ -277,5 +289,4 @@ if __name__ == "__main__":
     #         analyzer.analyze_emotions_img(f'{analyzer.input_folder_images}/{image}', f'output_{image}')
 
     # Example for video
-    video_path = f'{analyzer.input_folder_video}/video_short.mp4'
     analyzer.analyze_emotions_vid(video_path, 'output_video_test.mp4', analyse_each_x_frame=10) # example : 1 to process every frame, 10 to process every 10th frame
