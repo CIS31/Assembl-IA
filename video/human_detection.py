@@ -184,7 +184,7 @@ class HumanEmotionAnalyzer:
         if self.azure_run :
             # Copy the output video to Azure storage
             dbutils.fs.cp(f"file:{self.output_folder}/{output_name}", f"dbfs:{output_folder_dbfs}/{output_name}")
-            dbutils.fs.cp(f"file:{self.output_folder}/{timeline_file}", f"dbfs:{output_folder_dbfs}/{timeline_file}")
+            dbutils.fs.cp(f"file:{timeline_file}", f"dbfs:{output_folder_dbfs}/{timeline_file.split('/')[-1]}")
             print(f"Output video and timeline copied to Azure: {output_folder_dbfs}")
 
 class AzureUtils:
