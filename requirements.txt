@@ -1,6 +1,7 @@
 numpy==1.26.4
 opencv-python==4.10.0.84
 opencv-python-headless==4.10.0.84
+psycopg2==2.9.10
 scipy==1.13.1
 torch==2.5.1
 torch-model-archiver==0.12.0

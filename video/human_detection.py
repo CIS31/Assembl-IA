@@ -5,7 +5,7 @@ from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
 from PIL import Image
 import csv  # Import CSV module for saving timeline data
-import shutil  # Import shutil for file operations
+import psycopg2  # Import psycopg2 for PostgreSQL operations
 
 class HumanEmotionAnalyzer:
     def __init__(self, input_folder_images, input_folder_video, output_folder, yolo_model_path, emotion_model_dir, azure_run=False):
@@ -186,6 +186,21 @@ class HumanEmotionAnalyzer:
             dbutils.fs.cp(f"file:{self.output_folder}/{output_name}", f"dbfs:{output_folder_dbfs}/{output_name}")
             dbutils.fs.cp(f"file:{timeline_file}", f"dbfs:{output_folder_dbfs}/{timeline_file.split('/')[-1]}")
             print(f"Output video and timeline copied to Azure: {output_folder_dbfs}")
+            
+            # Initialize PostgresUtils
+            postgres_utils = PostgresUtils()
+
+            # Connect to PostgreSQL
+            postgres_utils.connect()
+
+            # Create table if it doesn't exist
+            postgres_utils.create_table(table_name="videoTimeline")
+
+            # Insert timeline data into PostgreSQL
+            postgres_utils.insert_timeline_data(table_name="videoTimeline", timeline_file=timeline_file)
+
+            # Close the connection
+            postgres_utils.close_connection()
 
 class AzureUtils:
     def __init__(self, mount_dir):
@@ -236,6 +251,88 @@ class AzureUtils:
         latest_file = sorted(video_files, key=lambda f: f.modificationTime, reverse=True)[0]
         print(f"Latest video file: {latest_file.path} (modified at {latest_file.modificationTime})")
         return latest_file.path
+
+class PostgresUtils:
+    def __init__(self, host, database, user, password):
+        """
+        Initialize the PostgreSQL connection using environment variables.
+        """
+        self.host = os.getenv('PGHOST')
+        self.database = os.getenv('PGDATABASE')
+        self.user = os.getenv('PGUSER')
+        self.password = os.getenv('PGPASSWORD')
+        self.port = os.getenv('PGPORT', 5432)
+        self.conn = None
+
+    def connect(self):
+        """
+        Establish a connection to the PostgreSQL database.
+        """
+        try:
+            self.conn = psycopg2.connect(
+                host=self.host,
+                database=self.database,
+                user=self.user,
+                password=self.password
+            )
+            print(f"Connected to PostgreSQL database: {self.database}")
+        except Exception as e:
+            print(f"Error connecting to PostgreSQL: {e}")
+            raise
+
+    def create_table(self, table_name):
+        """
+        Create a table for storing timeline data if it doesn't exist.
+        :param table_name: Name of the table to create.
+        """
+        try:
+            cursor = self.conn.cursor()
+            create_table_query = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                second INT,
+                number_of_detections INT,
+                emotions TEXT
+            );
+            """
+            cursor.execute(create_table_query)
+            self.conn.commit()
+            cursor.close()
+            print(f"Table '{table_name}' created successfully.")
+        except Exception as e:
+            print(f"Error creating table '{table_name}': {e}")
+            raise
+
+    def insert_timeline_data(self, table_name, timeline_file):
+        """
+        Insert timeline data from a CSV file into the PostgreSQL table.
+        :param table_name: Name of the table to insert data into.
+        :param timeline_file: Path to the timeline CSV file.
+        """
+        try:
+            cursor = self.conn.cursor()
+            with open(timeline_file, mode='r', encoding='utf-8') as csvfile:
+                next(csvfile)  # Skip the header row
+                for line in csvfile:
+                    second, number_of_detections, emotions = line.strip().split(',')
+                    insert_query = f"""
+                    INSERT INTO {table_name} (second, number_of_detections, emotions)
+                    VALUES (%s, %s, %s);
+                    """
+                    cursor.execute(insert_query, (int(second), int(number_of_detections), emotions))
+            self.conn.commit()
+            cursor.close()
+            print(f"Timeline data successfully inserted into table '{table_name}'.")
+        except Exception as e:
+            print(f"Error inserting data into table '{table_name}': {e}")
+            raise
+
+    def close_connection(self):
+        """
+        Close the connection to the PostgreSQL database.
+        """
+        if self.conn:
+            self.conn.close()
+            print("PostgreSQL connection closed.")
 
 # Example usage
 if __name__ == "__main__":
