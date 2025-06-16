@@ -181,66 +181,84 @@ class HumanEmotionAnalyzer:
         print(f"Timeline saved to {timeline_file}")
 
 
+class AzureUtils:
+    def __init__(self, mount_dir):
+        self.mount_dir = mount_dir
 
-def detect_azure_run():
-    """
-    Function to detect if the code is running in an Azure environment.
-    This function checks for the presence of a specific widget or environment variable.
-    """
-    # Analyse les arguments passés au script sous forme "AZURE_RUN=true"
-    args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
-    return args.get("AZURE_RUN", "false").lower() == "true"
+    def detect_azure_run(self):
+        """
+        Function to detect if the code is running in an Azure environment.
+        """
+        args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
+        return args.get("AZURE_RUN", "false").lower() == "true"
 
+    def mount_dir_Azure(self):
+        """
+        Function to mount the directory in Azure environment.
+        """
+        def is_mounted(mount_point):
+            mounts = [mount.mountPoint for mount in dbutils.fs.mounts()]
+            return mount_point in mounts
 
-def mount_dir_Azure(MOUNT_DIR):
-    """
-    Function to mount the directory in Azure environment.
-    This is a placeholder function and should be implemented based on the specific Azure environment setup.
-    """
-    def is_mounted(mount_point):
-        mounts = [mount.mountPoint for mount in dbutils.fs.mounts()]
-        return mount_point in mounts
-
-    configs = {"fs.azure.account.auth.type": "OAuth",
+        configs = {
+            "fs.azure.account.auth.type": "OAuth",
             "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
             "fs.azure.account.oauth2.client.id": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-application-id"),
             "fs.azure.account.oauth2.client.secret": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-secret-value"),
-            "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{dbutils.secrets.get(scope='az-kv-assemblia-scope', key='sp-tenant-id')}/oauth2/token"}
+            "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{dbutils.secrets.get(scope='az-kv-assemblia-scope', key='sp-tenant-id')}/oauth2/token"
+        }
 
-    if not is_mounted(MOUNT_DIR):
-        dbutils.fs.mount(
-        source = "abfss://data@azbstelecomparis.dfs.core.windows.net/",
-        mount_point = MOUNT_DIR,
-        extra_configs = configs)
-        print(f"Successfully mounted {MOUNT_DIR}")
-    else:
-        print(f"{MOUNT_DIR} is already mounted")
+        if not is_mounted(self.mount_dir):
+            dbutils.fs.mount(
+                source="abfss://data@azbstelecomparis.dfs.core.windows.net/",
+                mount_point=self.mount_dir,
+                extra_configs=configs
+            )
+            print(f"Successfully mounted {self.mount_dir}")
+        else:
+            print(f"{self.mount_dir} is already mounted")
 
+    def get_latest_video(self, blob_folder):
+        """
+        Function to get the latest video file (by modification date) in a blob folder.
+        """
+        files = dbutils.fs.ls(blob_folder)
+        video_files = [f for f in files if f.name.endswith('.mp4')]
+        if not video_files:
+            raise FileNotFoundError(f"No video files found in {blob_folder}")
+
+        latest_file = sorted(video_files, key=lambda f: f.modificationTime, reverse=True)[0]
+        print(f"Latest video file: {latest_file.path} (modified at {latest_file.modificationTime})")
+        return latest_file.path
 
 # Example usage
 if __name__ == "__main__":
+    # Initialize AzureUtils
+    azure_utils = AzureUtils(mount_dir="/mnt/data")
+
     # Check if running in Azure environment
-    AZURE_RUN = detect_azure_run()
+    AZURE_RUN = azure_utils.detect_azure_run()
 
     if AZURE_RUN:
         print("Running in Azure environment")
         
         # Mount Azure storage if needed
-        MOUNT_DIR = "/mnt/data"
-        mount_dir_Azure(MOUNT_DIR)
+        azure_utils.mount_dir_Azure()
 
         # DBFS paths
-        input_folder_images_dbfs = f"{MOUNT_DIR}/video/input/images"
-        input_folder_video_dbfs = f"{MOUNT_DIR}/video/input/videos"
-        output_folder_dbfs = f"{MOUNT_DIR}/video/output"
-        yolo_model_path_dbfs = f"{MOUNT_DIR}/video/models/yolov8/yolov8n-face-lindevs.pt"
-        emotion_model_dir_dbfs = f"{MOUNT_DIR}/video/models/5-HuggingFace/"
-        video_file_dbfs = f"{input_folder_video_dbfs}/video_short.mp4"
+        input_folder_images_dbfs = f"{azure_utils.mount_dir}/video/input/images"
+        input_folder_video_dbfs = f"{azure_utils.mount_dir}/video/input/videos"
+        output_folder_dbfs = f"{azure_utils.mount_dir}/video/output"
+        yolo_model_path_dbfs = f"{azure_utils.mount_dir}/video/models/yolov8/yolov8n-face-lindevs.pt"
+        emotion_model_dir_dbfs = f"{azure_utils.mount_dir}/video/models/5-HuggingFace/"
+
+        # Get the latest video file
+        video_file_dbfs = azure_utils.get_latest_video(input_folder_video_dbfs)
 
         # Local temp paths
         yolo_model_path_local = "/tmp/yolov8n-face-lindevs.pt"
         emotion_model_dir_local = "/tmp/emotion_model"
-        video_path_local = "/tmp/video_short.mp4"
+        video_path_local = "/tmp/video_latest.mp4"
 
         # Copy YOLO model locally
         if not os.path.exists(yolo_model_path_local):
@@ -254,7 +272,7 @@ if __name__ == "__main__":
             dbutils.fs.cp(emotion_model_dir_dbfs, f"file:{emotion_model_dir_local}", recurse=True)
         emotion_model_dir = emotion_model_dir_local
 
-        # Copy video file locally
+        # Copy the latest video file locally
         if not os.path.exists(video_path_local):
             print(f"Copying video from {video_file_dbfs} → {video_path_local}")
             dbutils.fs.cp(video_file_dbfs, f"file:{video_path_local}")
@@ -264,16 +282,16 @@ if __name__ == "__main__":
         output_folder = "/tmp/output"
         os.makedirs(output_folder, exist_ok=True)
 
-
     else:
         print("Running in local environment")
         # Set paths for local environment
-        input_folder_images='input/images'
-        input_folder_video='input/videos'
-        output_folder='output'
-        yolo_model_path='models/yolov8/yolov8n-face-lindevs.pt'
-        emotion_model_dir='models/5-HuggingFace/'
-    
+        input_folder_images = 'input/images'
+        input_folder_video = 'input/videos'
+        output_folder = 'output'
+        yolo_model_path = 'models/yolov8/yolov8n-face-lindevs.pt'
+        emotion_model_dir = 'models/5-HuggingFace/'
+        video_path = 'input/videos/video_short.mp4'
+
     # Initialize the HumanEmotionAnalyzer with correct paths
     analyzer = HumanEmotionAnalyzer(
         input_folder_images=input_folder_images if not AZURE_RUN else input_folder_images_dbfs,
