@@ -8,11 +8,12 @@ import csv  # Import CSV module for saving timeline data
 import shutil  # Import shutil for file operations
 
 class HumanEmotionAnalyzer:
-    def __init__(self, input_folder_images, input_folder_video, output_folder, yolo_model_path, emotion_model_dir):
+    def __init__(self, input_folder_images, input_folder_video, output_folder, yolo_model_path, emotion_model_dir, azure_run=False):
         # Configuration
         self.input_folder_images = input_folder_images
         self.input_folder_video = input_folder_video
         self.output_folder = output_folder
+        self.azure_run = azure_run
 
         # Constants for low and high resolution detection
         self.IMG_SIZE_LOW = 1280
@@ -74,7 +75,7 @@ class HumanEmotionAnalyzer:
         cv2.imwrite(f'{self.output_folder}/{output_name}', image)
         print(f"Emotion analysis saved to {self.output_folder}/{output_name}")
 
-    def analyze_emotions_vid(self, video_path, output_name, analyse_each_x_frame):
+    def analyze_emotions_vid(self, video_path, output_name, analyse_each_x_frame, output_folder_dbfs=None):
         # Open the video file
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -180,6 +181,11 @@ class HumanEmotionAnalyzer:
         print(f"Emotion analysis video saved to {self.output_folder}/{output_name}")
         print(f"Timeline saved to {timeline_file}")
 
+        if self.azure_run :
+            # Copy the output video to Azure storage
+            dbutils.fs.cp(f"file:{self.output_folder}/{output_name}", f"dbfs:{output_folder_dbfs}/{output_name}")
+            dbutils.fs.cp(f"file:{self.output_folder}/{timeline_file}", f"dbfs:{output_folder_dbfs}/{timeline_file}")
+            print(f"Output video and timeline copied to Azure: {output_folder_dbfs}")
 
 class AzureUtils:
     def __init__(self, mount_dir):
@@ -298,7 +304,8 @@ if __name__ == "__main__":
         input_folder_video=input_folder_video if not AZURE_RUN else input_folder_video_dbfs,
         output_folder=output_folder,
         yolo_model_path=yolo_model_path,
-        emotion_model_dir=emotion_model_dir
+        emotion_model_dir=emotion_model_dir,
+        azure_run=AZURE_RUN
     )
 
     # # Example for images
@@ -307,4 +314,7 @@ if __name__ == "__main__":
     #         analyzer.analyze_emotions_img(f'{analyzer.input_folder_images}/{image}', f'output_{image}')
 
     # Example for video
-    analyzer.analyze_emotions_vid(video_path, 'output_video_test.mp4', analyse_each_x_frame=10) # example : 1 to process every frame, 10 to process every 10th frame
+    analyzer.analyze_emotions_vid(video_path, 
+                                  'output_video_test.mp4', 
+                                  analyse_each_x_frame=10, # example : 1 to process every frame, 10 to process every 10th frame
+                                  output_folder_dbfs=output_folder_dbfs) 
