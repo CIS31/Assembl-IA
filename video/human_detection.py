@@ -272,6 +272,8 @@ class PostgresUtils:
         self.port = os.getenv('PGPORT', 5432)
         self.conn = None
 
+        print(f"PostgreSQL connection parameters: host={self.host}, database={self.database}, user={self.user}, port={self.port}")
+
     def connect(self):
         """
         Establish a connection to the PostgreSQL database.
@@ -281,7 +283,9 @@ class PostgresUtils:
                 host=self.host,
                 database=self.database,
                 user=self.user,
-                password=self.password
+                password=self.password,
+                port=self.port,
+                sslmode="require"
             )
             print(f"Connected to PostgreSQL database: {self.database}")
         except Exception as e:
