@@ -311,6 +311,7 @@ class PostgresUtils:
             cursor = self.conn.cursor()
             create_table_query = f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
+                videoID INT,
                 second INT,
                 number_of_detections INT,
                 emotions TEXT
