@@ -20,7 +20,14 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - ✅ Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
 - ✅ Annotation des résultats sur la vidéo en output
 - ✅ Création d'un timeline (fichier CSV)
-- ❌Graphique émotionnel temporel
+
+## Pipeline AWS 
+
+- ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
+- ✅ Recupération de la dernière vidéo présente sur le blob storage
+- ✅ Traitement
+- ✅ Enregistrement de la vidéo annotée et de la timeline dans le blob storage
+- ✅ Enregistrement de la timeline dans postgres
 
 ##  Modèles utilisés
 
