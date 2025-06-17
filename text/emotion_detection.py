@@ -21,6 +21,7 @@ from transformers import (
     CamembertTokenizer,
     CamembertForSequenceClassification,
     pipeline,
+    AutoTokenizer,
 )
 
 # ───── NLTK punkt ─────
@@ -79,7 +80,7 @@ class TextEmotionAnalyzer:
 
         print(f"[Model] Loading CamemBERT from: {model_dir}")
         self.model = CamembertForSequenceClassification.from_pretrained(model_dir)
-        self.tokenizer = CamembertTokenizer.from_pretrained(model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
         self.pipe = pipeline(
             "text-classification",
             model=self.model,
