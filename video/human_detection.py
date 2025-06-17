@@ -265,11 +265,21 @@ class PostgresUtils:
         """
         Initialize the PostgreSQL connection using environment variables.
         """
+        # Parse the arguments passed to the script as "key=value"
+        args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
+
+        # Inject them as environment variables.
+        os.environ['PGHOST'] = args.get('PGHOST', '')
+        os.environ['PGDATABASE'] = args.get('PGDATABASE', '')
+        os.environ['PGUSER'] = args.get('PGUSER', '')
+        os.environ['PGPASSWORD'] = args.get('PGPASSWORD', '')
+        os.environ['PGPORT']     = args.get('PGPORT', os.getenv('PGPORT', '5432'))
+
         self.host = os.getenv('PGHOST')
         self.database = os.getenv('PGDATABASE')
         self.user = os.getenv('PGUSER')
         self.password = os.getenv('PGPASSWORD')
-        self.port = os.getenv('PGPORT', 5432)
+        self.port = int(os.getenv('PGPORT', 5432))
         self.conn = None
 
         print(f"PostgreSQL connection parameters: host={self.host}, database={self.database}, user={self.user}, port={self.port}")
