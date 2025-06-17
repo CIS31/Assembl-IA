@@ -423,9 +423,12 @@ if __name__ == "__main__":
         emotion_model_dir = emotion_model_dir_local
 
         # Copy the latest video file locally
-        if not os.path.exists(video_path_local):
-            print(f"Copying video from {video_file_dbfs} → {video_path_local}")
-            dbutils.fs.cp(video_file_dbfs, f"file:{video_path_local}")
+        if os.path.exists(video_path_local):
+            print(f"Deleting existing video file: {video_path_local}")
+            os.remove(video_path_local)
+
+        print(f"Copying video from {video_file_dbfs} → {video_path_local}")
+        dbutils.fs.cp(video_file_dbfs, f"file:{video_path_local}")
         video_path = video_path_local
 
         # Local output folder (create if doesn't exist)
