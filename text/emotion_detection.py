@@ -179,9 +179,9 @@ if __name__ == "__main__":
         print("▶ Exécution Azure • Montage ADLS …")
         azure_utils.mount_dir_Azure()
 
-        xml_folder_dbfs = f"{azure_utils.mount_dir}/input"
-        model_dir_dbfs = f"{azure_utils.mount_dir}/models"
-        output_folder_dbfs = f"{azure_utils.mount_dir}/output"
+        xml_folder_dbfs = f"{azure_utils.mount_dir}/text/input"
+        model_dir_dbfs = f"{azure_utils.mount_dir}/text/models"
+        output_folder_dbfs = f"{azure_utils.mount_dir}/text/output"
 
         latest_xml_dbfs = azure_utils.get_latest_xml(xml_folder_dbfs)
         tmp_dir = Path("/tmp/text_emotion")
