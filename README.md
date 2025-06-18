@@ -1,5 +1,11 @@
 # Assembl-IA
 
+Présentation du projet
+  
+Présentation de la pipeline Azure  
+
+![Demo](./assets/Fil%20rouge%20v2.png)
+
 ## Analyse textuelle
 
 ## Analyse audio
@@ -10,7 +16,7 @@
 
 Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
 
-![Demo](./video/output/video_vitrine.gif)
+![Demo](./assets/video_vitrine.gif)
 
 
 ##  Fonctionnalités
@@ -21,7 +27,7 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 - ✅ Annotation des résultats sur la vidéo en output
 - ✅ Création d'un timeline (fichier CSV)
 
-## Pipeline AWS 
+## Pipeline Azure
 
 - ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
 - ✅ Recupération de la dernière vidéo présente sur le blob storage
