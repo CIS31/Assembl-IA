@@ -49,19 +49,17 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
 
 - resultats : 
-<p align="center">
-  <img src="./video/models/5-HuggingFace/testdumodel.png" alt="Test du model de detection d'émotions" width="80%">
-</p>
+![Demo](./assets/testdumodelvideo.png)
+  
+| Emotion   | Précision |
+|-----------|-----------|
+| Angry     | 0.772     |
+| Disgust   | 1.000     |
+| Fear      | 0.838     |
+| Happy     | 0.822     |
+| Neutral   | 0.740     |
+| Sad       | 0.943     |
+| Surprise  | 0.928     |
 
-```text
-precision globale =  0.846893285037615
-
-précision sur angry =  0.7722534081796311
-précision sur disgust =  1.0
-précision sur fear =  0.8382045929018789
-précision sur happy =  0.8223844282238443
-précision sur neutral =  0.740234375
-précision sur sad =  0.9434416365824309
-précision sur surprise =  0.9278466741826381
-```
+Précision globale : **0.847**
 
