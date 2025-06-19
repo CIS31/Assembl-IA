@@ -2,3 +2,4 @@ pytorch_model.bin
 *.mp4
 *.csv
 venv
+test.py

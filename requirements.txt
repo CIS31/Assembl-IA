@@ -1,3 +1,6 @@
+decorator==5.2.1
+imageio==2.37.0
+imageio-ffmpeg==0.6.0
 moviepy==2.2.1
 numpy==1.26.4
 opencv-python==4.10.0.84
@@ -9,6 +12,7 @@ torch-model-archiver==0.12.0
 torch-workflow-archiver==0.2.15
 torchserve==0.12.0
 torchvision==0.20.1
+tqdm==4.67.1
 transformers==4.49.0
 ultralytics==8.3.50
 ultralytics-thop==2.0.13
