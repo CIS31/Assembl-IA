@@ -4,7 +4,7 @@ import cv2
 from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
 from PIL import Image
-from moviepy.editor import VideoFileClip # Transform video to H.264 format
+from moviepy import VideoFileClip # Transform video to H.264 format
 import csv  # Import CSV module for saving timeline data
 import psycopg2  # Import psycopg2 for PostgreSQL operations
 
