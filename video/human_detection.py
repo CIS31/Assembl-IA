@@ -4,6 +4,7 @@ import cv2
 from ultralytics import YOLO
 from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
 from PIL import Image
+from moviepy.editor import VideoFileClip # Transform video to H.264 format
 import csv  # Import CSV module for saving timeline data
 import psycopg2  # Import psycopg2 for PostgreSQL operations
 
@@ -35,6 +36,23 @@ class HumanEmotionAnalyzer:
     def silent_inference(self, model, frame, conf, imgsz, iou, max_det):
         # Perform inference silently (without printing logs)
         return model(frame, conf=conf, imgsz=imgsz, iou=iou, max_det=max_det)
+    
+    def convert_to_h264(input_video_path, output_video_path):
+        """
+        Convert a video to H.264 format using MoviePy.
+        :param input_video_path: Path to the input video file.
+        :param output_video_path: Path to the output video file.
+        """
+        try:
+            # Charger la vidéo
+            video = VideoFileClip(input_video_path)
+            
+            # Convertir en H.264
+            print(f"Converting {input_video_path} to H.264 format...")
+            video.write_videofile(output_video_path, codec="libx264", audio_codec="aac")
+            print(f"Video successfully converted to {output_video_path}")
+        except Exception as e:
+            print(f"Error during video conversion: {e}")
 
     def analyze_emotions_img(self, image_path, output_name):
         # Load image
@@ -182,8 +200,12 @@ class HumanEmotionAnalyzer:
         print(f"Timeline saved to {timeline_file}")
 
         if self.azure_run :
+            # Transform the output video to H.264 format
+            output_video_h264 = f"{self.output_folder}/h264_{output_name}"
+            HumanEmotionAnalyzer.convert_to_h264(f"{self.output_folder}/{output_name}", output_video_h264)
+
             # Copy the output video to Azure storage
-            dbutils.fs.cp(f"file:{self.output_folder}/{output_name}", f"dbfs:{output_folder_dbfs}/{output_name}")
+            dbutils.fs.cp(f"file:{output_video_h264}", f"dbfs:{output_folder_dbfs}/h264_{output_name}")
             dbutils.fs.cp(f"file:{timeline_file}", f"dbfs:{output_folder_dbfs}/{timeline_file.split('/')[-1]}")
             print(f"Output video and timeline copied to Azure: {output_folder_dbfs}")
             
