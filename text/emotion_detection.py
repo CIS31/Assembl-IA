@@ -144,8 +144,8 @@ class PostgresUtils:
                      int(row["ordinal_prise"]), row["orateur"],
                      float(row["debut"]),  float(row["fin"]),
                      float(row["sad"]),    float(row["disgust"]),
-                     float(row["angry"]),  float(row["surprise"]),
-                     float(row["fear"]),   float(row["neutral"]),
+                     float(row["angry"]),  float(row["neutral"]),
+                     float(row["fear"]),   float(row["surprise"]),
                      float(row["happy"]),  row["texte"])
                 )
         self.conn.commit()
