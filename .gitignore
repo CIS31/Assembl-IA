@@ -120,7 +120,7 @@ ENV/
 env.bak/
 venv.bak/
 
-assets/
+assets/*wav
 input/*.wav
 output/
 tmp_model/
@@ -129,3 +129,8 @@ wav2vec2_checkpoint/
 pretrained_models/
 speechbrain_speaker_output/
 *.log
+pytorch_model.bin
+*.mp4
+*.csv
+venv
+test.py
