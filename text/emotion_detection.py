@@ -27,10 +27,15 @@ from transformers import (
 )
 
 # ───── NLTK punkt ─────
-try:
-    nltk.data.find("tokenizers/punkt/french.pickle")
-except LookupError:
-    nltk.download("punkt")
+# ───── NLTK punkt ─────
+for pkg, probe in [
+    ("punkt",     "tokenizers/punkt/french.pickle"),
+    ("punkt_tab", "tokenizers/punkt_tab/french")
+]:
+    try:
+        nltk.data.find(probe)
+    except LookupError:
+        nltk.download(pkg)
 
 # ───── Azure Utils ─────
 class AzureUtils:
