@@ -10,8 +10,8 @@ import sys
 import shutil
 import glob
 import re
-import csv                 # ← ajouté
-import psycopg2            # ← ajouté
+import csv
+import psycopg2
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -26,8 +26,7 @@ from transformers import (
     AutoTokenizer,
 )
 
-# ───── NLTK punkt ─────
-# ───── NLTK punkt ─────
+# ─── NLTK punkt ───
 for pkg, probe in [
     ("punkt",     "tokenizers/punkt/french.pickle"),
     ("punkt_tab", "tokenizers/punkt_tab/french")
@@ -37,7 +36,6 @@ for pkg, probe in [
     except LookupError:
         nltk.download(pkg)
 
-# ───── Azure Utils ─────
 class AzureUtils:
     def __init__(self, mount_dir="/mnt/data"):
         self.mount_dir = mount_dir
@@ -78,14 +76,7 @@ class AzureUtils:
         print(f"[AzureUtils] Dernier XML : {latest.path}")
         return latest.path
 
-# ───── Postgres Utils ─────
 class PostgresUtils:
-    """
-    Outil générique pour créer la table `textTimeline` (si besoin) et insérer les
-    données du CSV généré par TextEmotionAnalyzer.
-    Les paramètres de connexion sont passés en arguments du job :
-        --PGHOST=… --PGDATABASE=… --PGUSER=… --PGPASSWORD=…
-    """
     def __init__(self):
         args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
 
@@ -102,7 +93,6 @@ class PostgresUtils:
         self.port     = int(os.getenv('PGPORT', 5432))
         self.conn     = None
 
-    # --------------------------------------------------------------------- connexion
     def connect(self):
         self.conn = psycopg2.connect(
             host=self.host, database=self.database,
@@ -111,7 +101,6 @@ class PostgresUtils:
         )
         print(f"[Postgres] Connexion OK → {self.database}")
 
-    # ------------------------------------------------------------------ création table
     def create_table(self, table_name="textTimeline"):
         ddl = f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
@@ -135,14 +124,12 @@ class PostgresUtils:
         self.conn.commit()
         print(f"[Postgres] Table '{table_name}' vérifiée / créée.")
 
-    # ----------------------------------------------------------- auto-incrément docID
     def get_last_doc_id(self, table_name="textTimeline"):
         with self.conn.cursor() as cur:
             cur.execute(f"SELECT MAX(docID) FROM {table_name};")
             res = cur.fetchone()[0]
         return res if res is not None else 0
 
-    # --------------------------------------------------------------------- insertion
     def insert_csv(self, csv_path, table_name="textTimeline"):
         new_doc_id = self.get_last_doc_id(table_name) + 1
         with self.conn.cursor() as cur, open(csv_path, encoding="utf-8") as f:
@@ -157,20 +144,18 @@ class PostgresUtils:
                      int(row["ordinal_prise"]), row["orateur"],
                      float(row["debut"]),  float(row["fin"]),
                      float(row["sad"]),    float(row["disgust"]),
-                     float(row["angry"]),  float(row["neutral"]),
-                     float(row["fear"]),   float(row["surprise"]),
+                     float(row["angry"]),  float(row["surprise"]),
+                     float(row["fear"]),   float(row["neutral"]),
                      float(row["happy"]),  row["texte"])
                 )
         self.conn.commit()
         print(f"[Postgres] Insertion CSV terminée • docID={new_doc_id}")
 
-    # ------------------------------------------------------------------- fermeture
     def close(self):
         if self.conn:
             self.conn.close()
             print("[Postgres] Connexion fermée.")
 
-# ───── Emotion Analyzer ─────
 class TextEmotionAnalyzer:
     def __init__(self, model_dir: str, output_dir: str):
         self.model_dir = model_dir
@@ -270,7 +255,6 @@ class TextEmotionAnalyzer:
         print(f"[OK] Résultats sauvegardés → {out_path}")
         return out_path
 
-# ───── Main ─────
 if __name__ == "__main__":
     azure_utils = AzureUtils(mount_dir="/mnt/data")
     AZURE_RUN = azure_utils.detect_azure_run()
@@ -315,17 +299,15 @@ if __name__ == "__main__":
     )
     csv_path = analyzer.analyze_xml(str(xml_local))
 
-    # ---------------------------------------------------------------------- stockage
     if AZURE_RUN:
         dest_dbfs = f"{output_folder_dbfs}/{csv_path.name}"
         dbutils.fs.cp(f"file:{csv_path}", dest_dbfs)
         print("✔ Pipeline terminé dans Azure")
 
-        # --------------------------- insertion PostgreSQL
         try:
             pg = PostgresUtils()
             pg.connect()
-            pg.create_table(table_name="textTimeline")  
+            pg.create_table(table_name="textTimeline")
             pg.insert_csv(csv_path, table_name="textTimeline")
             print("✔ Données insérées dans PostgreSQL")
         finally:
