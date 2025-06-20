@@ -91,11 +91,13 @@ if xml_response.status_code==200:
         dest=f"{azure_utils.mount_dir}/text/input/{filename}"
         dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/text/input")
         dbutils.fs.cp(f"file:{tmp_path}",dest,overwrite=True)
+        print(f"[Blob] Fichier XML sauvegardé dans Azure → {dest}")
     else:
-        current_dir=Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
-        input_dir=current_dir.parent/"text"/"input"
-        input_dir.mkdir(parents=True,exist_ok=True)
-        file_path=input_dir/filename
-        with open(file_path,"wb") as f:f.write(xml_response.content)
+        input_dir = Path("/dbfs/mnt/data/text/input")
+        input_dir.mkdir(parents=True, exist_ok=True)
+        file_path = input_dir / filename
+        with open(file_path, "wb") as f:
+            f.write(xml_response.content)
+        print(f"[Local] Fichier XML téléchargé → {file_path}")
 else:
     print(f"Erreur {xml_response.status_code}")
