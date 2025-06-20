@@ -247,6 +247,7 @@ class TextEmotionAnalyzer:
             total = sum(agg.values()) or 1
             agg = {k: v / total for k, v in agg.items()}
             renamed = {self.rename_map[lbl]: agg.get(lbl, 0.0) for lbl in self.rename_map}
+            renamed["surprise"], renamed["neutral"] = renamed["neutral"], renamed["surprise"]
             results.append({**p, **renamed})
 
         df = pd.DataFrame(results)[["ordinal_prise", "orateur", "texte", "debut", "fin"] + self.ordered_labels].fillna(0)
