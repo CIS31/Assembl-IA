@@ -32,9 +32,9 @@ for pkg, probe in [
     except LookupError:
         nltk.download(pkg)
 
-# ──────────────────────────────────────────────────────────────
-#                        Azure utilities
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────
+#          Azure utils
+# ──────────────────────────────
 class AzureUtils:
     def __init__(self, mount_dir="/mnt/data"):
         self.mount_dir = mount_dir
@@ -43,11 +43,47 @@ class AzureUtils:
         args = dict(arg.split("=") for arg in sys.argv[1:] if "=" in arg)
         return args.get("AZURE_RUN", "false").lower() == "true"
 
-    # (méthodes mount_dir_Azure et get_latest_xml inchangées …)
+    def mount_dir_Azure(self):
+        def is_mounted(mp):
+            mounts = [m.mountPoint for m in dbutils.fs.mounts()]
+            return mp in mounts
 
-# ──────────────────────────────────────────────────────────────
-#                      PostgreSQL utilities
-# ──────────────────────────────────────────────────────────────
+        configs = {
+            "fs.azure.account.auth.type": "OAuth",
+            "fs.azure.account.oauth.provider.type":
+                "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+            "fs.azure.account.oauth2.client.id":
+                dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-application-id"),
+            "fs.azure.account.oauth2.client.secret":
+                dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-secret-value"),
+            "fs.azure.account.oauth2.client.endpoint":
+                f"https://login.microsoftonline.com/"
+                f"{dbutils.secrets.get(scope='az-kv-assemblia-scope', key='sp-tenant-id')}"
+                f"/oauth2/token",
+        }
+
+        if not is_mounted(self.mount_dir):
+            dbutils.fs.mount(
+                source="abfss://data@azbstelecomparis.dfs.core.windows.net/",
+                mount_point=self.mount_dir,
+                extra_configs=configs,
+            )
+            print(f"[AzureUtils] Montage OK → {self.mount_dir}")
+        else:
+            print(f"[AzureUtils] Déjà monté → {self.mount_dir}")
+
+    def get_latest_xml(self, folder_dbfs: str) -> str:
+        files = dbutils.fs.ls(folder_dbfs)
+        xml_files = [f for f in files if f.name.endswith(".xml")]
+        if not xml_files:
+            raise FileNotFoundError(f"Aucun fichier XML dans {folder_dbfs}")
+        latest = max(xml_files, key=lambda f: f.modificationTime)
+        print(f"[AzureUtils] Dernier XML : {latest.path}")
+        return latest.path
+
+# ──────────────────────────────
+#      PostgreSQL utils
+# ──────────────────────────────
 class PostgresUtils:
     def __init__(self):
         args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
@@ -77,7 +113,7 @@ class PostgresUtils:
         ddl = f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             docID INT,
-            article TEXT,                 -- ← nouvelle colonne
+            article TEXT,
             ordinal_prise INT,
             orateur TEXT,
             debut DOUBLE PRECISION,
@@ -103,33 +139,25 @@ class PostgresUtils:
             res = cur.fetchone()[0]
         return res if res is not None else 0
 
-    # ————— Insertion filtrée / re-basée (article 9) —————
-    def insert_csv(
-        self,
-        csv_path,
-        table_name="textTimeline",
-        target_article="9",
-    ):
-        new_doc_id   = self.get_last_doc_id(table_name) + 1
-        rows_to_send = []
+    # ——— Filtre + re-basage article 9 uniquement ———
+    def insert_csv(self, csv_path, table_name="textTimeline", target_article="9"):
+        new_doc_id = self.get_last_doc_id(table_name) + 1
 
+        # charge et filtre le CSV
         with open(csv_path, encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row.get("article") == target_article:
-                    rows_to_send.append(row)
+            rows = [r for r in csv.DictReader(f) if r.get("article") == target_article]
 
-        if not rows_to_send:
-            print(f"[Postgres] Aucun enregistrement pour l’article {target_article} – rien inséré.")
+        if not rows:
+            print(f"[Postgres] Rien à insérer pour l’article {target_article}.")
             return
 
-        # re-base : première prise de l’article 9 → 0 s
-        offset = float(rows_to_send[0]["debut"])
+        # re-base temps : première prise de l’article 9 → 0 s
+        offset = float(rows[0]["debut"])
 
         with self.conn.cursor() as cur:
-            for row in rows_to_send:
-                debut = float(row["debut"]) - offset
-                fin   = float(row["fin"])   - offset
+            for r in rows:
+                debut = float(r["debut"]) - offset
+                fin   = float(r["fin"])   - offset
                 cur.execute(
                     f"""INSERT INTO {table_name}
                         (docID, article, ordinal_prise, orateur, debut, fin,
@@ -137,38 +165,37 @@ class PostgresUtils:
                          surprise, happy, texte)
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""",
                     (
-                        new_doc_id, row["article"],
-                        int(row["ordinal_prise"]), row["orateur"],
+                        new_doc_id, r["article"], int(r["ordinal_prise"]), r["orateur"],
                         debut, fin,
-                        float(row["sad"]),    float(row["disgust"]),
-                        float(row["angry"]),  float(row["neutral"]),
-                        float(row["fear"]),   float(row["surprise"]),
-                        float(row["happy"]),  row["texte"]
+                        float(r["sad"]),    float(r["disgust"]),  float(r["angry"]),
+                        float(r["neutral"]), float(r["fear"]),    float(r["surprise"]),
+                        float(r["happy"]),  r["texte"]
                     )
                 )
         self.conn.commit()
-        print(f"[Postgres] Insertion terminée • docID={new_doc_id} • article={target_article}")
+        print(f"[Postgres] Insertion article {target_article} terminée • docID={new_doc_id}")
 
     def close(self):
         if self.conn:
             self.conn.close()
             print("[Postgres] Connexion fermée.")
 
-# ──────────────────────────────────────────────────────────────
-#                   Text Emotion Analyzer class
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────
+#     TextEmotionAnalyzer
+# ──────────────────────────────
 class TextEmotionAnalyzer:
     def __init__(self, model_dir: str, output_dir: str):
+        self.model_dir  = model_dir
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"[Model] Loading CamemBERT from: {model_dir}")
         self.model     = CamembertForSequenceClassification.from_pretrained(model_dir)
         self.tokenizer = CamembertTokenizer.from_pretrained(model_dir)
-        self.pipe = pipeline("text-classification",
-                             model=self.model,
-                             tokenizer=self.tokenizer,
-                             top_k=5)
+        self.pipe      = pipeline("text-classification",
+                                  model=self.model,
+                                  tokenizer=self.tokenizer,
+                                  top_k=5)
 
         self.rename_map = {
             "sad": "sad", "disgusted": "disgust", "anger": "angry",
@@ -179,7 +206,7 @@ class TextEmotionAnalyzer:
             "sad", "disgust", "angry", "neutral", "fear", "surprise", "happy"
         ]
 
-    # ───────── helpers ─────────
+    # ─── Helpers ───
     @staticmethod
     def _clean_text(txt: str) -> str:
         txt = txt.replace("\xa0", " ")
@@ -200,7 +227,7 @@ class TextEmotionAnalyzer:
             chunks.append(" ".join(chunk))
         return chunks
 
-    # ───────── XML → CSV ─────────
+    # ─── XML → CSV ───
     def analyze_xml(self, xml_path: str) -> Path:
         xml_path = Path(xml_path)
         tree = ET.parse(xml_path)
@@ -208,28 +235,25 @@ class TextEmotionAnalyzer:
         ns = {"ns": "http://schemas.assemblee-nationale.fr/referentiel"}
 
         prises, current_article = [], None
-        for elem in root.iter():
-            tag = elem.tag.split('}')[-1]   # suppr. namespace
+        for node in root.iter():
+            tag = node.tag.split('}')[-1]
 
-            # mémorise l'article
-            if tag == "point" and elem.attrib.get("art"):
-                current_article = elem.attrib["art"].strip()
+            if tag == "point" and node.attrib.get("art"):
+                current_article = node.attrib["art"].strip()
 
-            # prise de parole
-            if tag == "paragraphe" and "ordinal_prise" in elem.attrib:
-                texte_elem = elem.find("ns:texte", ns)
+            if tag == "paragraphe" and "ordinal_prise" in node.attrib:
+                texte_elem = node.find("ns:texte", ns)
                 if texte_elem is None:
                     continue
-                texte = "".join(texte_elem.itertext())
-                texte = self._clean_text(texte)
-                stime = texte_elem.attrib.get("stime")
+                texte  = self._clean_text("".join(texte_elem.itertext()))
+                stime  = texte_elem.attrib.get("stime")
                 if not texte or stime is None:
                     continue
                 prises.append({
                     "article": current_article or "",
-                    "ordinal_prise": elem.attrib["ordinal_prise"],
-                    "orateur": elem.find("ns:orateurs/ns:orateur/ns:nom", ns).text
-                               if elem.find("ns:orateurs/ns:orateur/ns:nom", ns) is not None
+                    "ordinal_prise": node.attrib["ordinal_prise"],
+                    "orateur": node.find("ns:orateurs/ns:orateur/ns:nom", ns).text
+                               if node.find("ns:orateurs/ns:orateur/ns:nom", ns) is not None
                                else "Inconnu",
                     "texte": texte,
                     "debut": float(stime),
@@ -240,13 +264,13 @@ class TextEmotionAnalyzer:
 
         prises = sorted(prises, key=lambda x: int(x["ordinal_prise"]))
 
-        # calcul des fins (timeline d'origine)
+        # fins sur timeline originale
         for i in range(len(prises) - 1):
             prises[i]["fin"] = prises[i + 1]["debut"]
         prises[-1]["fin"] = None
         prises = [p for p in prises if p["fin"] is not None]
 
-        # — pipeline d'émotions —
+        # émotions
         results = []
         for p in prises:
             agg = {}
@@ -265,18 +289,49 @@ class TextEmotionAnalyzer:
 
         out_path = self.output_dir / f"{xml_path.stem}_emotions.csv"
         df.to_csv(out_path, index=False, encoding="utf-8")
-        print(f"[OK] CSV généré → {out_path}")
+        print(f"[OK] CSV sauvegardé → {out_path}")
         return out_path
 
-# ──────────────────────────────────────────────────────────────
-#                            main
-# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────
+#               main
+# ──────────────────────────────
 if __name__ == "__main__":
-    # --- chemins locaux d’exemple ; adaptez si besoin ---
-    xml_local    = Path("input") / "CRSANR5L17S2025O1N250.xml"
-    model_local  = Path("models")
-    output_local = Path("output")
-    output_local.mkdir(exist_ok=True)
+    azure_utils = AzureUtils(mount_dir="/mnt/data")
+    AZURE_RUN = azure_utils.detect_azure_run()
+
+    if AZURE_RUN:
+        print("▶ Exécution Azure • Montage ADLS …")
+        azure_utils.mount_dir_Azure()
+
+        xml_folder_dbfs   = f"{azure_utils.mount_dir}/text/input"
+        model_dir_dbfs    = f"{azure_utils.mount_dir}/text/models"
+        output_folder_dbfs = f"{azure_utils.mount_dir}/text/output"
+
+        latest_xml_dbfs = azure_utils.get_latest_xml(xml_folder_dbfs)
+        tmp_dir         = Path("/tmp/text_emotion")
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        xml_local   = tmp_dir / Path(latest_xml_dbfs).name
+        model_local = tmp_dir / "model"
+        output_local = tmp_dir / "output"
+        output_local.mkdir(exist_ok=True)
+
+        if not xml_local.exists():
+            dbutils.fs.cp(latest_xml_dbfs, f"file:{xml_local}")
+        if not model_local.exists():
+            dbutils.fs.cp(model_dir_dbfs, f"file:{model_local}", recurse=True)
+
+    else:
+        print("▶ Exécution locale")
+        xml_folder   = "input"
+        model_dir    = "models"
+        output_local = Path("output")
+        output_local.mkdir(exist_ok=True)
+
+        xml_files = sorted(Path(xml_folder).glob("*.xml"))
+        if not xml_files:
+            raise FileNotFoundError(f"Aucun XML dans {xml_folder}")
+        xml_local   = xml_files[-1]
+        model_local = Path(model_dir)
 
     analyzer = TextEmotionAnalyzer(
         model_dir=str(model_local),
@@ -284,6 +339,12 @@ if __name__ == "__main__":
     )
     csv_path = analyzer.analyze_xml(str(xml_local))
 
+    if AZURE_RUN:
+        dest_dbfs = f"{output_folder_dbfs}/{csv_path.name}"
+        dbutils.fs.cp(f"file:{csv_path}", dest_dbfs)
+        print("✔ CSV copié vers DBFS")
+
+    # — insertion PostgreSQL —
     pg = PostgresUtils()
     try:
         pg.connect()
