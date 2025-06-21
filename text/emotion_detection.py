@@ -137,18 +137,12 @@ class PostgresUtils:
 
     def ensure_article_column(self, table_name="textTimeline"):
         with self.conn.cursor() as cur:
-            cur.execute("""
-                SELECT column_name
-                FROM information_schema.columns
-                WHERE table_name = %s AND column_name = 'article';
-            """, (table_name,))
-            if not cur.fetchone():
-                print("[Postgres] Colonne 'article' absente → ajout…")
-                cur.execute(f"ALTER TABLE {table_name} ADD COLUMN article TEXT DEFAULT 'unknown';")
-                self.conn.commit()
-                print("[Postgres] Colonne 'article' ajoutée.")
-            else:
-                print("[Postgres] Colonne 'article' déjà présente.")
+            cur.execute(
+                f"""ALTER TABLE {table_name}
+                    ADD COLUMN IF NOT EXISTS article TEXT DEFAULT 'unknown';"""
+            )
+        self.conn.commit()
+        print("[Postgres] Colonne 'article' vérifiée (créée si absente).")
 
     def get_last_doc_id(self, table_name="textTimeline"):
         with self.conn.cursor() as cur:
