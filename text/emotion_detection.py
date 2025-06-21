@@ -314,6 +314,8 @@ class TextEmotionAnalyzer:
             ["article", "ordinal_prise", "orateur", "texte", "debut", "fin"] + self.ordered_labels
         ].fillna(0)
         df["article"] = df["article"].replace("", "9").replace("nan", "9").fillna("9")
+        df["debut"] = df["debut"].apply(lambda x: round(x))
+        df["fin"]   = df["fin"].apply(lambda x: round(x))
         out_path = self.output_dir / f"{xml_path.stem}_emotions.csv"
         df.to_csv(out_path, index=False, encoding="utf-8")
         print(f"[OK] CSV sauvegardé → {out_path}")
