@@ -121,7 +121,6 @@ env.bak/
 venv.bak/
 
 *wav
-output/
 tmp_model/
 wav2vec2_checkpoint/
 *.log
