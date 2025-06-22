@@ -109,14 +109,10 @@ else:
     exit(1)
 
 output_file = "output_segment.mp4"
-start_time = "278.38"
-duration = "60"  # 1 minute
 
 command = [
     "ffmpeg",
-    "-ss", start_time,        # Start at 278.38 seconds
     "-i", m3u8_url,
-    "-t", duration,           # Record only 60 seconds
     "-c", "copy",             # Copy without re-encoding
     output_file
 ]
