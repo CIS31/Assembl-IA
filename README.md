@@ -1,5 +1,7 @@
 # Assembl-IA
 
+> ⚠️ *Ce projet vise avant tout à mettre en place d’une pipeline Azure et l'utilisation de modèles de machine learning. Les résultats obtenus sont présentés à titre illustratif et ne feront l’objet d’aucun commentaire politique ou d'interprétation ici.*
+
 Ce projet a pour but de capter les stratégies rhétoriques, entendues comme les techniques d'expression et de communication, mises en œuvre par les députés actifs lors des séances parlementaires.   
 
 Pour ce faire notre équipe s'est orientée vers la pipeline Azure suivante :  
