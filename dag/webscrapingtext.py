@@ -6,7 +6,6 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-# Classe AzureUtils déjà définie dans ton script
 class AzureUtils:
     def __init__(self, mount_dir):
         self.mount_dir = mount_dir

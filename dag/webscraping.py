@@ -9,6 +9,43 @@ import subprocess
 from pathlib import Path
 import os
 
+class AzureUtils:
+    def __init__(self, mount_dir):
+        self.mount_dir = mount_dir
+
+    def detect_azure_run(self):
+        """
+        Function to detect if the code is running in an Azure environment.
+        """
+        args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
+        return args.get("AZURE_RUN", "false").lower() == "true"
+
+    def mount_dir_Azure(self):
+        """
+        Function to mount the directory in Azure environment.
+        """
+        def is_mounted(mount_point):
+            mounts = [mount.mountPoint for mount in dbutils.fs.mounts()]
+            return mount_point in mounts
+
+        configs = {
+            "fs.azure.account.auth.type": "OAuth",
+            "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+            "fs.azure.account.oauth2.client.id": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-application-id"),
+            "fs.azure.account.oauth2.client.secret": dbutils.secrets.get(scope="az-kv-assemblia-scope", key="sp-secret-value"),
+            "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{dbutils.secrets.get(scope='az-kv-assemblia-scope', key='sp-tenant-id')}/oauth2/token"
+        }
+
+        if not is_mounted(self.mount_dir):
+            dbutils.fs.mount(
+                source="abfss://data@azbstelecomparis.dfs.core.windows.net/",
+                mount_point=self.mount_dir,
+                extra_configs=configs
+            )
+            print(f"Successfully mounted {self.mount_dir}")
+        else:
+            print(f"{self.mount_dir} is already mounted")
+
 # Charger la page d'accueil des vidéos
 url_base = "https://videos.assemblee-nationale.fr"
 response = requests.get(url_base)
@@ -82,23 +119,23 @@ except subprocess.CalledProcessError as e:
     exit(1)
 
 # Copier la vidéo dans Azure ou localement
-try:
-    from emotion_detectionvf import AzureUtils
-except ImportError:
-    AzureUtils = None
-
-if AzureUtils is not None:
-    azure_utils = AzureUtils(mount_dir="/mnt/data")
-    AZURE_RUN = azure_utils.detect_azure_run()
-else:
-    AZURE_RUN = False
+azure_utils = AzureUtils(mount_dir="/mnt/data")
+AZURE_RUN = azure_utils.detect_azure_run()
 
 if AZURE_RUN:
     azure_utils.mount_dir_Azure()
     tmp_path = Path("/tmp") / output_file
     dest = f"{azure_utils.mount_dir}/video/input/WebScrapping_{output_file}"
     dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/video/input")
-    dbutils.fs.cp(f"file:{tmp_path}", dest, overwrite=True)
+    
+    # Supprimer le fichier de destination s'il existe
+    try:
+        dbutils.fs.rm(dest)
+    except Exception as e:
+        print(f"Le fichier {dest} n'existe pas ou ne peut pas être supprimé : {e}")
+
+    # Copier le fichier
+    dbutils.fs.cp(f"file:{tmp_path}", dest)
     print(f"[Blob] Vidéo sauvegardée dans Azure → {dest}")
 else:
     input_dir = Path("/dbfs/mnt/data/video/input")
