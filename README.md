@@ -1,19 +1,83 @@
 # Assembl-IA
 
-Présentation du projet
-  
-Présentation de la pipeline Azure  
+Ce projet a pour but de capter les stratégies rhétoriques, entendues comme les techniques d'expression et de communication, mises en œuvre par les députés actifs lors des séances parlementaires.   
+
+Pour ce faire notre équipe s'est orientée vers la pipeline Azure suivante :  
 
 ![Demo](./assets/Fil%20rouge%20v2.png)
 
-## Analyse textuelle
+L'interface utilisateur est accessible via le lien : 
+🔗 https://assemblia-backend.azurewebsites.net/informations
 
-## Analyse audio
+## Job 0 : Webscrapping 
 
-#### 🚀 Introduction
+Dans le dossier dag se trouvent deux fichiers python permettant de récupérer :   - les dernières vidéos de l'asssemblée nationale au format .mp4  
+- les derniers comptes-rendus de séances au format .xml  
+Ces fichiers sont stockés dans le blob storage Azure et servent d'imput pour les différents jobs ci-dessous.  
+   
+## Job 1 : Analyse vidéo  
+  
+#### Présentation  
+
+Ce job permet de traiter la vidéo la plus récente récupérée suite au webscrapping.  
+
+#### Fonctionnalités
+
+- ✅ Lecture vidéo frame par frame
+- ✅ Détection des visages
+- ✅ Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
+- ✅ Annotation des résultats sur la vidéo en output
+- ✅ Création d'un timeline (fichier CSV)
+
+#### Pipeline Azure
+
+- ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
+- ✅ Recupération de la dernière vidéo présente sur le blob storage
+- ✅ Traitement
+- ✅ Enregistrement de la vidéo annotée et de la timeline dans le blob storage
+- ✅ Enregistrement de la timeline dans postgres
+
+#### Démo GIF 
+
+Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
+
+![Demo](./assets/video_vitrine.gif)
+
+#### Modèles utilisés
+
+- YOLO v8 : 
+🔗 https://yolov8.com/
+
+- facial_emotions_image_detection : 
+🔗 https://huggingface.co/dima806/facial_emotions_image_detection
+
+#### Evaluation des modèles 
+
+- utilisation du dataset de test suivant :
+🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
+
+- resultats : 
+![Demo](./assets/testdumodelvideo.png)
+  
+| Emotion   | Précision |
+|-----------|-----------|
+| Angry     | 0.772     |
+| Disgust   | 1.000     |
+| Fear      | 0.838     |
+| Happy     | 0.822     |
+| Neutral   | 0.740     |
+| Sad       | 0.943     |
+| Surprise  | 0.928     |
+
+Précision globale : **0.847**
+
+
+## Job 2 : Analyse audio
+
+#### Introduction
 Ce projet met en œuvre un pipeline complet d'analyse audio, axé sur l'extraction et l'étude des caractéristiques prosodiques du langage parlé, ainsi que sur la diarisation des locuteurs. L'objectif est de fournir des informations détaillées sur "qui a parlé quand" et "comment" (en termes de hauteur et d'intensité de la voix), facilitant ainsi une compréhension approfondie des interactions vocales.
 
-#### 🎯 Objectifs de l'Analyse
+#### Objectifs de l'Analyse
 Notre analyse audio vise à atteindre les objectifs suivants :
 
 * **Compter le nombre de locuteurs** distincts présents dans un enregistrement audio.
@@ -22,7 +86,7 @@ Notre analyse audio vise à atteindre les objectifs suivants :
 * Extraire et analyser le **Pitch (F0)** (fréquence fondamentale / hauteur de la voix) pour chaque locuteur.
 * Générer une **Timeline de Prise de Parole** : visualiser graphiquement les périodes d'activité vocale de chaque participant.
 
-#### ⚙️ Méthodologie
+#### Méthodologie
 
 Le pipeline d'analyse est structuré en plusieurs étapes clés :
 
@@ -44,7 +108,7 @@ Le pipeline d'analyse est structuré en plusieurs étapes clés :
     * Des statistiques descriptives clés (moyenne, médiane, écart-type) pour le pitch et l'intensité sont calculées pour chaque locuteur.
     * La durée totale de parole de chaque locuteur est comptabilisée pour évaluer leur contribution.
 
-#### 📊 Sorties et Visualisation
+#### Sorties et Visualisation
 
 Le projet génère plusieurs types de sorties, principalement sous forme de fichiers CSV pour faciliter l'intégration avec des outils de visualisation ou d'analyse externe :
 
@@ -56,7 +120,7 @@ Le projet génère plusieurs types de sorties, principalement sous forme de fich
 
 Des fonctions de traçage sont également incluses pour générer des représentations visuelles (diagrammes de timeline, histogrammes de distribution, tracés de contours) directement si nécessaire.
 
-#### 🛠️ Utilisation (Conceptuel)
+#### Utilisation (Conceptuel)
 
 Pour utiliser ce pipeline, vous devrez généralement :
 
@@ -65,7 +129,7 @@ Pour utiliser ce pipeline, vous devrez généralement :
 3.  Exécuter la classe d'analyse fournie en lui passant ces fichiers en entrée.
 4.  Les fichiers de sortie CSV seront générés dans le répertoire spécifié (par défaut `./output/`).
 
-#### 📊 Analyse Interactive et Visualisations
+#### Analyse Interactive et Visualisations
 
 ![prosodic_contour](./audio/output/prosodic_contours_speaker_x.png)
 
@@ -76,6 +140,7 @@ Pour une exploration interactive des données et la visualisation des différent
 
 ![distribution_intensité](./audio/output/distribution_intensité.png)
 
+## Job 3 : Analyse textuelle
 
 #### Présentation
 
@@ -133,60 +198,3 @@ Les deux jeux ont été fusionnés puis ré-équilibrés pour obtenir exactement
 ![Confusion Matrix](./assets/confusion_matrix_text_model.png)
 
 > Le score de 90 % sur le set de test confirme l’intérêt du fine-tuning pour ajouter la classe *Dégoût* (vs 82 % avant adaptation).
-
-
-## Analyse audio
-
-## Analyse vidéo
-
-#### Présentation
-
-Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
-
-![Demo](./assets/video_vitrine.gif)
-
-
-##  Fonctionnalités
-
-- ✅ Lecture vidéo frame par frame
-- ✅ Détection des visages
-- ✅ Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
-- ✅ Annotation des résultats sur la vidéo en output
-- ✅ Création d'un timeline (fichier CSV)
-
-## Pipeline Azure
-
-- ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
-- ✅ Recupération de la dernière vidéo présente sur le blob storage
-- ✅ Traitement
-- ✅ Enregistrement de la vidéo annotée et de la timeline dans le blob storage
-- ✅ Enregistrement de la timeline dans postgres
-
-##  Modèles utilisés
-
-- YOLO v8 : 
-🔗 https://yolov8.com/
-
-- facial_emotions_image_detection : 
-🔗 https://huggingface.co/dima806/facial_emotions_image_detection
-
-##  Evaluation des modèles 
-
-- utilisation du dataset de test suivant :
-🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
-
-- resultats : 
-![Demo](./assets/testdumodelvideo.png)
-  
-| Emotion   | Précision |
-|-----------|-----------|
-| Angry     | 0.772     |
-| Disgust   | 1.000     |
-| Fear      | 0.838     |
-| Happy     | 0.822     |
-| Neutral   | 0.740     |
-| Sad       | 0.943     |
-| Surprise  | 0.928     |
-
-Précision globale : **0.847**
-
