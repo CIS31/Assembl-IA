@@ -77,6 +77,66 @@ Pour une exploration interactive des données et la visualisation des différent
 ![distribution_intensité](./audio/output/distribution_intensité.png)
 
 
+#### Présentation
+
+Cette brique du projet vise à **détecter les émotions dans des textes en français** (transcriptions audio, commentaires, scripts, etc.).  
+Afin d’aligner la sortie textuelle sur l’axe visuel, nous couvrons **7 émotions** : Tristesse (`sad`), Peur (`fear`), Colère (`anger`), Neutre (`neutral`), Surprise (`surprise`), Joie (`joy`) et Dégoût (`disgusted`).
+
+#### Fonctionnalités
+
+- ✅ Pré-traitement complet du texte (nettoyage, normalisation, tokenisation)
+- ✅ Classification des émotions sur 7 classes
+- ✅ Export CSV contenant : timestamp, texte original, émotion prédite, score de confiance
+- ✅ Intégration directe dans la pipeline Azure (Databricks + Blob Storage + Postgres)
+
+#### Pipeline Azure
+
+1. Lecture des fichiers texte ou transcriptions stockés dans le **Blob Storage**  
+2. **Databricks** appelle le notebook de prédiction NLP  
+3. Les prédictions sont :
+   - stockées au format CSV dans le Blob Storage (dossier *output*)  
+   - insérées dans **Postgres** pour exploitation BI  
+4. Les métriques d’exécution (latence, nombre de tokens) sont remontées à **Azure Application Insights**
+
+#### Modèle utilisé
+
+| Nom | Base | Type | Lien |
+|-----|------|------|------|
+| `assembl-ia/french_emotion_camembert-7cls` | CamemBERT-base | Fine-tune (7 émotions) | 🔗 [Hugging Face (original)](https://huggingface.co/astrosbd/french_emotion_camembert) |
+
+- **Fine-tuning** réalisé sur un jeu de données équilibré de **5 033 phrases** (719 exemples/émotion).  
+- **Epochs** : 5   •  **Batch size** : 16   •  **LR** : 2e-5
+
+#### Données d’entraînement
+
+| Source | Langue | Taille | Particularité |
+|--------|--------|--------|---------------|
+| **EMODIFT** | FR | 3 194 | Annoté manuellement |
+| **TPM-28 / emotion-FR** | FR | 1 839 | Contient la classe *Dégoût* |
+
+Les deux jeux ont été fusionnés puis ré-équilibrés pour obtenir exactement **719 exemples / classe**.
+
+#### Évaluation du modèle
+
+| Emotion   | Précision |
+|-----------|-----------|
+| Angry     | 0.87      |
+| Disgust   | 0.83      |
+| Fear      | 0.91      |
+| Happy     | 0.93      |
+| Neutral   | 0.86      |
+| Sad       | 0.94      |
+| Surprise  | 0.99      |
+
+**Précision globale** : **0.90**
+
+![Confusion Matrix](./assets/confusion_matrix_text_model.png)
+
+> Le score de 90 % sur le set de test confirme l’intérêt du fine-tuning pour ajouter la classe *Dégoût* (vs 82 % avant adaptation).
+
+
+## Analyse audio
+
 ## Analyse vidéo
 
 #### Présentation

@@ -121,6 +121,9 @@ env.bak/
 venv.bak/
 
 *wav
+assets/*wav
+input/*.wav
+output/
 tmp_model/
 wav2vec2_checkpoint/
 *.log
