@@ -108,7 +108,7 @@ else:
     print(" URL not found")
     exit(1)
 
-output_file = "output_segment.mp4"
+output_file = "/tmp/output_segment.mp4"
 
 command = [
     "ffmpeg",
