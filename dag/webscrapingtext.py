@@ -148,10 +148,6 @@ if xml_response.status_code == 200:
         dest = f"{azure_utils.mount_dir}/text/input/WebScrapping_{filename}"
         dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/text/input")
         
-        # Supprimer le fichier de destination s'il existe
-        if dbutils.fs.ls(dest):
-            dbutils.fs.rm(dest)
-
         # Copier le fichier sans l'argument overwrite
         dbutils.fs.cp(f"file:{tmp_path}", dest)
 
