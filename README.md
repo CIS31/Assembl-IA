@@ -9,7 +9,7 @@ Pour ce faire notre équipe s'est orientée vers la pipeline Azure suivante :
 ![Demo](./assets/Fil%20rouge%20v2.png)
 
 L'interface utilisateur est accessible via le lien : 
-🔗 https://assemblia-backend.azurewebsites.net/informations
+https://assemblia-backend.azurewebsites.net/informations
 
 ## Job 0 : Webscrapping 
 
@@ -27,19 +27,19 @@ Ce job permet de traiter la vidéo la plus récente récupérée suite au webscr
 
 #### Fonctionnalités
 
-- ✅ Lecture vidéo frame par frame
-- ✅ Détection des visages
-- ✅ Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
-- ✅ Annotation des résultats sur la vidéo en output
-- ✅ Création d'un timeline (fichier CSV)
+- Lecture vidéo frame par frame
+- Détection des visages
+- Si visage assez grand → Détection des émotions (les 2 classes majoritaires)
+- Annotation des résultats sur la vidéo en output
+- Création d'un timeline (fichier CSV)
 
 #### Pipeline Azure
 
-- ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
-- ✅ Récupération de la dernière vidéo présente sur le blob storage
-- ✅ Traitement
-- ✅ Enregistrement de la vidéo annotée et de la timeline dans le blob storage
-- ✅ Enregistrement de la timeline dans postgres
+- Lecture des variables d'environnement contenues dans les paramètres du job databricks
+- Récupération de la dernière vidéo présente sur le blob storage
+- Traitement
+- Enregistrement de la vidéo annotée et de la timeline dans le blob storage
+- Enregistrement de la timeline dans postgres
 
 #### Démo GIF 
 
@@ -50,15 +50,15 @@ Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier outp
 #### Modèles utilisés
 
 - YOLO v8 : 
-🔗 https://yolov8.com/
+https://yolov8.com/
 
 - facial_emotions_image_detection : 
-🔗 https://huggingface.co/dima806/facial_emotions_image_detection
+  https://huggingface.co/dima806/facial_emotions_image_detection
 
 #### Evaluation des modèles 
 
 - utilisation du dataset de test suivant :
-🔗 https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
+https://www.kaggle.com/datasets/ananthu017/emotion-detection-fer
 
 - resultats : 
 ![Demo](./assets/testdumodelvideo.png)
@@ -153,10 +153,10 @@ Afin d’aligner la sortie textuelle sur l’axe visuel, nous couvrons **7 émot
 
 #### Fonctionnalités
 
-- ✅ Pré-traitement complet du texte (nettoyage, normalisation, tokenisation)
-- ✅ Classification des émotions sur 7 classes
-- ✅ Export CSV contenant : timestamp, texte original, émotion prédite, score de confiance
-- ✅ Intégration directe dans la pipeline Azure (Databricks + Blob Storage + Postgres)
+- Pré-traitement complet du texte (nettoyage, normalisation, tokenisation)
+- Classification des émotions sur 7 classes
+- Export CSV contenant : timestamp, texte original, émotion prédite, score de confiance
+- Intégration directe dans la pipeline Azure (Databricks + Blob Storage + Postgres)
 
 #### Pipeline Azure
 
@@ -171,7 +171,7 @@ Afin d’aligner la sortie textuelle sur l’axe visuel, nous couvrons **7 émot
 
 | Nom | Base | Type | Lien |
 |-----|------|------|------|
-| `assembl-ia/french_emotion_camembert-7cls` | CamemBERT-base | Fine-tune (7 émotions) | 🔗 [Hugging Face (original)](https://huggingface.co/astrosbd/french_emotion_camembert) |
+| `assembl-ia/french_emotion_camembert-7cls` | CamemBERT-base | Fine-tune (7 émotions) | [Hugging Face (original)](https://huggingface.co/astrosbd/french_emotion_camembert) |
 
 - **Fine-tuning** réalisé sur un jeu de données équilibré de **5 033 phrases** (719 exemples/émotion).  
 - **Epochs** : 5   •  **Batch size** : 16   •  **LR** : 2e-5
