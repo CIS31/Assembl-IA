@@ -112,6 +112,7 @@ output_file = "/tmp/output_segment.mp4"
 
 command = [
     "ffmpeg",
+    "-y",                     # Force écrasement du fichier de sortie
     "-i", m3u8_url,
     "-c", "copy",             # Copy without re-encoding
     output_file
@@ -131,7 +132,7 @@ AZURE_RUN = azure_utils.detect_azure_run()
 if AZURE_RUN:
     azure_utils.mount_dir_Azure()
     tmp_path = Path("/tmp") / output_file
-    dest = f"{azure_utils.mount_dir}/video/input/videos/WebScrapping_{Path(output_file).name}"
+    dest = f"{azure_utils.mount_dir}/video/input/videos/WebScrapping_output_segment.mp4"
     dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/video/input/videos")
     
     # Supprimer le fichier de destination s'il existe
