@@ -88,7 +88,7 @@ if xml_response.status_code==200:
         azure_utils.mount_dir_Azure()
         tmp_path=Path("/tmp")/filename
         with open(tmp_path,"wb") as f:f.write(xml_response.content)
-        dest=f"{azure_utils.mount_dir}/text/input/{filename}"
+        dest=f"{azure_utils.mount_dir}/text/input/WebScrapping_{filename}"
         dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/text/input")
         dbutils.fs.cp(f"file:{tmp_path}",dest,overwrite=True)
         print(f"[Blob] Fichier XML sauvegardé dans Azure → {dest}")

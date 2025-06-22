@@ -14,7 +14,8 @@ L'interface utilisateur est accessible via le lien :
 Dans le dossier dag se trouvent deux fichiers python permettant de récupérer :  
 - les dernières vidéos de l'asssemblée nationale au format .mp4  
 - les derniers comptes-rendus de séances au format .xml  
-Ces fichiers sont stockés dans le blob storage Azure et servent d'imput pour les différents jobs ci-dessous.  
+
+Ces fichiers sont stockés dans le blob storage Azure et servent d'input pour les différents jobs ci-dessous.  
    
 ## Job 1 : Analyse vidéo  
   
@@ -33,7 +34,7 @@ Ce job permet de traiter la vidéo la plus récente récupérée suite au webscr
 #### Pipeline Azure
 
 - ✅ Lecture des variables d'environnement contenues dans les paramètres du job databricks
-- ✅ Recupération de la dernière vidéo présente sur le blob storage
+- ✅ Récupération de la dernière vidéo présente sur le blob storage
 - ✅ Traitement
 - ✅ Enregistrement de la vidéo annotée et de la timeline dans le blob storage
 - ✅ Enregistrement de la timeline dans postgres
