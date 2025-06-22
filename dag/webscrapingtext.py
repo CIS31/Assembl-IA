@@ -147,7 +147,14 @@ if xml_response.status_code == 200:
             f.write(xml_response.content)
         dest = f"{azure_utils.mount_dir}/text/input/WebScrapping_{filename}"
         dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/text/input")
-        dbutils.fs.cp(f"file:{tmp_path}", dest, overwrite=True)
+        
+        # Supprimer le fichier de destination s'il existe
+        if dbutils.fs.ls(dest):
+            dbutils.fs.rm(dest)
+
+        # Copier le fichier sans l'argument overwrite
+        dbutils.fs.cp(f"file:{tmp_path}", dest)
+
         print(f"[Blob] Fichier XML sauvegardé dans Azure → {dest}")
     else:
         # Si on est en local, sauvegarder le fichier localement
