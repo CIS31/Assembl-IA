@@ -49,17 +49,17 @@ Les deux jeux ont été fusionnés puis ré-équilibrés pour obtenir exactement
 
 #### Évaluation du modèle
 
-| Emotion   | Précision | Rappel | F1-score |
-|-----------|-----------|--------|----------|
-| Sad       | 0.94      | 0.95   | 0.94 |
-| Fear      | 0.91      | 0.87   | 0.89 |
-| Anger     | 0.87      | 0.88   | 0.88 |
-| Neutral   | 0.86      | 0.86   | 0.86 |
-| Surprise  | 0.99      | 0.98   | 0.99 |
-| Joy       | 0.93      | 0.86   | 0.90 |
-| Disgusted | 0.83      | 0.93   | 0.88 |
-| **Macro avg** | **0.91** | **0.90** | **0.90** |
-| **Accuracy globale** |        |        | **0.90** |
+| Emotion   | Précision |
+|-----------|-----------|
+| Angry     | 0.87      |
+| Disgust   | 0.83      |
+| Fear      | 0.91      |
+| Happy     | 0.93      |
+| Neutral   | 0.86      |
+| Sad       | 0.94      |
+| Surprise  | 0.99      |
+
+**Précision globale** : **0.90**
 
 ![Confusion Matrix](./assets/confusion_matrix_text_model.png)
 
