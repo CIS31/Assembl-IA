@@ -11,7 +11,8 @@ L'interface utilisateur est accessible via le lien :
 
 ## Job 0 : Webscrapping 
 
-Dans le dossier dag se trouvent deux fichiers python permettant de récupérer :   - les dernières vidéos de l'asssemblée nationale au format .mp4  
+Dans le dossier dag se trouvent deux fichiers python permettant de récupérer :  
+- les dernières vidéos de l'asssemblée nationale au format .mp4  
 - les derniers comptes-rendus de séances au format .xml  
 Ces fichiers sont stockés dans le blob storage Azure et servent d'imput pour les différents jobs ci-dessous.  
    
