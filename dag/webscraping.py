@@ -131,8 +131,8 @@ AZURE_RUN = azure_utils.detect_azure_run()
 if AZURE_RUN:
     azure_utils.mount_dir_Azure()
     tmp_path = Path("/tmp") / output_file
-    dest = f"{azure_utils.mount_dir}/video/input/WebScrapping_{output_file}"
-    dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/video/input")
+    dest = f"{azure_utils.mount_dir}/video/input/videos/WebScrapping_{Path(output_file).name}"
+    dbutils.fs.mkdirs(f"{azure_utils.mount_dir}/video/input/videos")
     
     # Supprimer le fichier de destination s'il existe
     try:
