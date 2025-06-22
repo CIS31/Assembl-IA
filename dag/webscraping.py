@@ -46,6 +46,19 @@ class AzureUtils:
         else:
             print(f"{self.mount_dir} is already mounted")
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+
+# Configurer les options de Chrome
+chrome_options = Options()
+chrome_options.add_argument("--no-sandbox")  # Nécessaire pour Databricks
+chrome_options.add_argument("--disable-dev-shm-usage")  # Réduit les problèmes de mémoire
+chrome_options.add_argument("--headless")  # Mode sans interface graphique
+
+# Configurer le service Chrome
+service = Service("/usr/local/bin/chromedriver")  # Chemin vers ChromeDriver
+
 # Charger la page d'accueil des vidéos
 url_base = "https://videos.assemblee-nationale.fr"
 response = requests.get(url_base)
@@ -68,7 +81,7 @@ video_relative_url = link_tag["href"]
 video_url = f"{url_base}/{video_relative_url}"
 print(" URL complète de la vidéo :", video_url)
 
-driver = webdriver.Chrome()
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 time.sleep(2)
 try:
