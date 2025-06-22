@@ -1,13 +1,15 @@
+import sys
 import requests
 from bs4 import BeautifulSoup
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import re
 import subprocess
 from pathlib import Path
-import os
 
 class AzureUtils:
     def __init__(self, mount_dir):
@@ -46,18 +48,15 @@ class AzureUtils:
         else:
             print(f"{self.mount_dir} is already mounted")
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-
 # Configurer les options de Chrome
 chrome_options = Options()
 chrome_options.add_argument("--no-sandbox")  # Nécessaire pour Databricks
 chrome_options.add_argument("--disable-dev-shm-usage")  # Réduit les problèmes de mémoire
 chrome_options.add_argument("--headless")  # Mode sans interface graphique
 
-# Configurer le service Chrome
-service = Service("/usr/local/bin/chromedriver")  # Chemin vers ChromeDriver
+# Utilisation dynamique du bon chromedriver
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # Charger la page d'accueil des vidéos
 url_base = "https://videos.assemblee-nationale.fr"
@@ -80,8 +79,6 @@ print(" Lien de la vidéo :", link_tag["href"])
 video_relative_url = link_tag["href"]
 video_url = f"{url_base}/{video_relative_url}"
 print(" URL complète de la vidéo :", video_url)
-
-driver = webdriver.Chrome(service=service, options=chrome_options)
 
 time.sleep(2)
 try:

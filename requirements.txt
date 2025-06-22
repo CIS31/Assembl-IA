@@ -30,3 +30,4 @@ beautifulsoup4==4.13.4
 sentencepiece==0.2.0
 nltk==3.9.1
 selenium==4.33.0
+webdriver-manager==4.0.2
