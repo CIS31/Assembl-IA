@@ -84,9 +84,12 @@ class AzureUtils:
         print(f"[AzureUtils] Dernier XML : {latest.path}")
         return latest.path
 
+<<<<<<< HEAD
+=======
 # ──────────────────────────────────────────────────────────────
 #                      PostgreSQL utilities
 # ──────────────────────────────────────────────────────────────
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 class PostgresUtils:
     def __init__(self):
         args = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
@@ -135,6 +138,8 @@ class PostgresUtils:
         self.conn.commit()
         print(f"[Postgres] Table '{table_name}' vérifiée / créée.")
 
+<<<<<<< HEAD
+=======
     def ensure_article_column(self, table_name="textTimeline"):
         with self.conn.cursor() as cur:
             cur.execute(
@@ -144,12 +149,35 @@ class PostgresUtils:
         self.conn.commit()
         print("[Postgres] Colonne 'article' vérifiée (créée si absente).")
 
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
     def get_last_doc_id(self, table_name="textTimeline"):
         with self.conn.cursor() as cur:
             cur.execute(f"SELECT MAX(docID) FROM {table_name};")
             res = cur.fetchone()[0]
         return res if res is not None else 0
 
+<<<<<<< HEAD
+    def insert_csv(self, csv_path, table_name="textTimeline"):
+        new_doc_id = self.get_last_doc_id(table_name) + 1
+        with self.conn.cursor() as cur, open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                cur.execute(
+                    f"""INSERT INTO {table_name}
+                        (docID, ordinal_prise, orateur, debut, fin,
+                         sad, disgust, angry, neutral, fear, surprise, happy, texte)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""",
+                    (new_doc_id,
+                     int(row["ordinal_prise"]), row["orateur"],
+                     float(row["debut"]),  float(row["fin"]),
+                     float(row["sad"]),    float(row["disgust"]),
+                     float(row["angry"]),  float(row["neutral"]),
+                     float(row["fear"]),   float(row["surprise"]),
+                     float(row["happy"]),  row["texte"])
+                )
+        self.conn.commit()
+        print(f"[Postgres] Insertion CSV terminée • docID={new_doc_id}")
+=======
     def insert_csv(self, csv_path, table_name="textTimeline", target_article="9"):
         new_doc_id = self.get_last_doc_id(table_name) + 1
 
@@ -181,15 +209,19 @@ class PostgresUtils:
                 )
         self.conn.commit()
         print(f"[Postgres] Insertion terminée • docID={new_doc_id}")
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 
     def close(self):
         if self.conn:
             self.conn.close()
             print("[Postgres] Connexion fermée.")
 
+<<<<<<< HEAD
+=======
 # ──────────────────────────────────────────────────────────────
 #                   Text Emotion Analyzer class
 # ──────────────────────────────────────────────────────────────
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 class TextEmotionAnalyzer:
     def __init__(self, model_dir: str, output_dir: str):
         self.model_dir = model_dir
@@ -300,9 +332,15 @@ class TextEmotionAnalyzer:
                     agg[pr["label"]] = agg.get(pr["label"], 0) + pr["score"]
             total = sum(agg.values()) or 1
             agg = {k: v / total for k, v in agg.items()}
+<<<<<<< HEAD
+            renamed = {self.rename_map[lbl]: agg.get(lbl, 0.0) for lbl in self.rename_map}
+            renamed["surprise"], renamed["neutral"] = renamed["neutral"], renamed["surprise"]
+            results.append({**p, **renamed})
+=======
             mapped = {self.rename_map[lbl]: agg.get(lbl, 0.0) for lbl in self.rename_map}
             mapped["surprise"], mapped["neutral"] = mapped["neutral"], mapped["surprise"]
             results.append({**p, **mapped})
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 
         df = pd.DataFrame(results)[
             ["article", "ordinal_prise", "orateur", "texte", "debut", "fin"] + self.ordered_labels
@@ -315,9 +353,12 @@ class TextEmotionAnalyzer:
         print(f"[OK] CSV sauvegardé → {out_path}")
         return out_path
 
+<<<<<<< HEAD
+=======
 # ──────────────────────────────────────────────────────────────
 #                            main
 # ──────────────────────────────────────────────────────────────
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 if __name__ == "__main__":
     azure_utils = AzureUtils(mount_dir="/mnt/data")
     AZURE_RUN = azure_utils.detect_azure_run()
@@ -327,8 +368,13 @@ if __name__ == "__main__":
         azure_utils.mount_dir_Azure()
 
         xml_folder_dbfs = f"{azure_utils.mount_dir}/text/input"
+<<<<<<< HEAD
+        model_dir_dbfs = f"{azure_utils.mount_dir}/text/models"
+        output_folder_dbfs = f"{azure_utils.mount_dir}/text/output"
+=======
         model_dir_dbfs  = f"{azure_utils.mount_dir}/text/models"
         output_dbfs_dir = f"{azure_utils.mount_dir}/text/output"
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
 
         latest_xml_dbfs = azure_utils.get_latest_xml(xml_folder_dbfs)
         tmp_dir         = Path("/tmp/text_emotion")
@@ -363,6 +409,22 @@ if __name__ == "__main__":
     csv_path = analyzer.analyze_xml(str(xml_local))
 
     if AZURE_RUN:
+<<<<<<< HEAD
+        dest_dbfs = f"{output_folder_dbfs}/{csv_path.name}"
+        dbutils.fs.cp(f"file:{csv_path}", dest_dbfs)
+        print("✔ Pipeline terminé dans Azure")
+
+        try:
+            pg = PostgresUtils()
+            pg.connect()
+            pg.create_table(table_name="textTimeline")
+            pg.insert_csv(csv_path, table_name="textTimeline")
+            print("✔ Données insérées dans PostgreSQL")
+        finally:
+            pg.close()
+    else:
+        print("✔ Pipeline terminé en local")
+=======
         dest_dbfs = f"{output_dbfs_dir}/{csv_path.name}"
         dbutils.fs.cp(f"file:{csv_path}", dest_dbfs)  # type: ignore
         print("✔ CSV copié vers DBFS")
@@ -376,3 +438,4 @@ if __name__ == "__main__":
         pg.insert_csv(csv_path, "textTimeline", target_article="9")
     finally:
         pg.close()
+>>>>>>> c7bc5277bcb37bc686d33af36eb5ad73059a1eb7
