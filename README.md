@@ -8,8 +8,6 @@ Présentation de la pipeline Azure
 
 ## Analyse textuelle
 
-## Analyse textuelle
-
 #### Présentation
 
 Cette brique du projet vise à **détecter les émotions dans des textes en français** (transcriptions audio, commentaires, scripts, etc.).  
