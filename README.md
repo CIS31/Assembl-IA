@@ -202,3 +202,17 @@ Les deux jeux ont été fusionnés puis ré-équilibrés pour obtenir exactement
 ![Confusion Matrix](./assets/confusion_matrix_text_model.png)
 
 > Le score de 90 % sur le set de test confirme l’intérêt du fine-tuning pour ajouter la classe *Dégoût* (vs 82 % avant adaptation).
+
+## Informations légales et sources
+
+Ce projet vise avant tout à mettre en place un pipeline Azure ainsi qu'à expérimenter l’utilisation de modèles de machine learning.
+Les résultats présentés sont illustratifs et ne font l’objet d’aucun commentaire politique ni d’interprétation.
+Nous utilisons, adaptons et exploitons des données sous Licence Ouverte mises à disposition par l’Assemblée nationale :
+
+- [data.assemblee-nationale.fr](https://data.assemblee-nationale.fr)
+- [videos.assemblee-nationale.fr](https://videos.assemblee-nationale.fr)
+
+**La responsabilité de l’Assemblée nationale ne saurait être engagée en cas d’erreur**
+(cf. [data.gouv.fr](https://www.data.gouv.fr/fr/licences-etalab/))
+
+Dernière mise à jour : 22 juin 2025
