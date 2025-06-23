@@ -1,6 +1,6 @@
 # Assembl-IA
 
-> ⚠️ *Ce projet vise avant tout à mettre en place d’une pipeline Azure et l'utilisation de modèles de machine learning. Les résultats obtenus sont présentés à titre illustratif et ne feront l’objet d’aucun commentaire politique ou d'interprétation ici.*
+> ⚠️ *Ce projet vise avant tout à la mise en place d’une pipeline Azure et l'utilisation de modèles de machine learning. Les résultats obtenus sont présentés à titre illustratif et ne feront l’objet d’aucun commentaire politique ou d'interprétation ici.*
 
 Ce projet a pour but de capter les stratégies rhétoriques, entendues comme les techniques d'expression et de communication, mises en œuvre par les députés actifs lors des séances parlementaires.   
 
@@ -43,7 +43,7 @@ Ce job permet de traiter la vidéo la plus récente récupérée suite au webscr
 
 #### Démo GIF 
 
-Il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output
+Illustration de la vidéo annotée (il s'agit d'un gif, la vidéo au format .mp4 est disponible dans le dossier output).
 
 ![Demo](./assets/video_vitrine.gif)
 
