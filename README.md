@@ -213,6 +213,5 @@ Nous utilisons, adaptons et exploitons des données sous Licence Ouverte mises �
 - [videos.assemblee-nationale.fr](https://videos.assemblee-nationale.fr)
 
 **La responsabilité de l’Assemblée nationale ne saurait être engagée en cas d’erreur**
-(cf. [data.gouv.fr](https://www.data.gouv.fr/fr/licences-etalab/))
 
 Dernière mise à jour : 22 juin 2025
